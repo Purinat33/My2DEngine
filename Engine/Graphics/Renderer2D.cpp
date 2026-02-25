@@ -55,4 +55,35 @@ namespace eng
     {
         SDL_RenderPresent(m->renderer);
     }
+
+    void Renderer2D::DrawLine(int x1, int y1, int x2, int y2, Color c)
+    {
+        SDL_SetRenderDrawColor(m->renderer, c.r, c.g, c.b, c.a);
+        SDL_RenderDrawLine(m->renderer, x1, y1, x2, y2);
+    }
+
+    void Renderer2D::DrawPolyLine(const eng::Vec2f* pts, int count, Color c, bool closed)
+    {
+        if (!pts || count < 2) return;
+
+        SDL_SetRenderDrawColor(m->renderer, c.r, c.g, c.b, c.a);
+
+        for (int i = 0; i < count - 1; ++i)
+        {
+            SDL_RenderDrawLine(
+                m->renderer,
+                (int)pts[i].x, (int)pts[i].y,
+                (int)pts[i + 1].x, (int)pts[i + 1].y
+            );
+        }
+
+        if (closed)
+        {
+            SDL_RenderDrawLine(
+                m->renderer,
+                (int)pts[count - 1].x, (int)pts[count - 1].y,
+                (int)pts[0].x, (int)pts[0].y
+            );
+        }
+    }
 }

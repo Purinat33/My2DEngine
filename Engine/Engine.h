@@ -3,3 +3,8 @@
 #include "Core/Types.h"
 #include "Graphics/Renderer2D.h"
 #include "Physics/PhysicsWorld.h"
+#include "Core/Math2D.h"
+#include "World/Tilemap.h"
+#include "Collision/Collision2D.h"
+#include "Gameplay/CharacterController.h"
+#include "Core/Input.h"

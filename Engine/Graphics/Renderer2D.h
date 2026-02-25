@@ -21,6 +21,8 @@ namespace eng
 
         void Clear(Color c);
         void DrawRectFilled(RectI r, Color c);
+        void DrawLine(int x1, int y1, int x2, int y2, Color c);
+        void DrawPolyLine(const eng::Vec2f* pts, int count, Color c, bool closed = true);
         void Present();
 
     private:

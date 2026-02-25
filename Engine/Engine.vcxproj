@@ -142,17 +142,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Collision\Collision2D.h" />
     <ClInclude Include="Core\App.h" />
+    <ClInclude Include="Core\Input.h" />
+    <ClInclude Include="Core\Math2D.h" />
     <ClInclude Include="Core\Types.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Gameplay\CharacterController.h" />
     <ClInclude Include="Graphics\Renderer2D.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Physics\PhysicsWorld.h" />
+    <ClInclude Include="World\Tilemap.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\App.cpp" />
+    <ClCompile Include="Core\Input.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="Gameplay\CharacterController.cpp" />
     <ClCompile Include="Graphics\Renderer2D.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

@@ -1,11 +1,13 @@
 #include "pch.h"
 #include "Core/App.h"
+#include "Core/Input.h"
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
 #include <spdlog/spdlog.h>
 #include <chrono>
+
 
 namespace eng
 {
@@ -18,6 +20,8 @@ namespace eng
             spdlog::critical("SDL_Init failed: {}", SDL_GetError());
             return -1;
         }
+
+        eng::input::Input::InitDefaults();
 
         Uint32 windowFlags = SDL_WINDOW_SHOWN;
         if (cfg.resizable) windowFlags |= SDL_WINDOW_RESIZABLE;
@@ -57,15 +61,23 @@ namespace eng
         while (running)
         {
             // Events
+            eng::input::Input::BeginFrame();
+
             SDL_Event e;
             while (SDL_PollEvent(&e))
             {
+                eng::input::Input::ProcessEvent(&e);
+
                 if (e.type == SDL_QUIT)
                     running = false;
-
-                if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
-                    running = false;
             }
+
+            // finalize input snapshot + edges for this frame
+            eng::input::Input::EndFrame();
+
+            // optional: handle pause/quit action here
+            if (eng::input::Input::ConsumePressed(eng::input::Action::Pause))
+                running = false;
 
             // Timing
             auto now = std::chrono::steady_clock::now();
