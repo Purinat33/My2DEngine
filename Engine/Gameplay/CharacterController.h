@@ -42,6 +42,16 @@ namespace eng::gameplay
         }
 
         void SetPositionPx(eng::Vec2f p) { m_cap.center = p; }
+        void TeleportPx(eng::Vec2f p)
+        {
+            m_cap.center = p;
+            m_vel = { 0,0 };
+            m_grounded = false;
+            m_groundNormal = { 0,-1 };
+            m_coyote = 0.0f;
+            m_jumpBuf = 0.0f;
+            m_wasGrounded = false;
+        }
         eng::Vec2f GetPositionPx() const { return m_cap.center; }
         eng::Vec2f GetVelocityPx() const { return m_vel; }
         bool IsGrounded() const { return m_grounded; }

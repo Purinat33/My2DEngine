@@ -9,3 +9,6 @@
 #include "Gameplay/CharacterController.h"
 #include "Core/Input.h"
 #include "Gameplay/TriggerWorld.h"
+#include "Gameplay/GameState.h"
+#include "World/RoomGraph.h"
+#include "Gameplay/MetroidvaniaWorld.h"

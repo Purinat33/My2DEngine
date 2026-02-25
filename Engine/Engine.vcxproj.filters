@@ -54,6 +54,12 @@
     <ClInclude Include="Gameplay\TriggerWorld.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="World\RoomGraph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\MetroidvaniaWorld.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
