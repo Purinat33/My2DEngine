@@ -3,6 +3,7 @@
 
 namespace eng::gameplay
 {
+    
     void CharacterController::FixedUpdate(float dt, float moveX, bool jumpPressed, const eng::world::Tilemap& map)
     {
         m_wasGrounded = m_grounded;
@@ -32,38 +33,66 @@ namespace eng::gameplay
             m_jumpBuf = 0.0f;
         }
 
-        // integrate
-        m_cap.center.x += m_vel.x * dt;
-        m_cap.center.y += m_vel.y * dt;
+        const float dx = m_vel.x * dt;
+        const float dy = m_vel.y * dt;
 
-        // collision solve + ground detect
-        SolveCollisions(map);
+        // --- Move X, resolve, step-up if we hit a wall while grounded-ish ---
+        const eng::Vec2f start = m_cap.center;
+        m_cap.center.x += dx;
 
-        // ground snap (fixes slope seams + tile boundaries)
+        SolveResult resX = SolveCollisions(map);
+
+        const bool groundedish = m_wasGrounded || resX.grounded;
+        const bool onSlope = resX.grounded && std::fabs(resX.groundNormal.x) > 0.2f; // slope-ish normal
+        if (groundedish && !onSlope && resX.hitWall && std::fabs(dx) > 0.001f)
+        {
+            // Retry with step-up from original position (pre-X move)
+            m_cap.center = start;
+
+            // Try step-up move; if it fails, fall back to normal X move+solve
+            if (!TryStepUp(map, dx))
+            {
+                m_cap.center = start;
+                m_cap.center.x += dx;
+                SolveCollisions(map);
+            }
+        }
+
+        // --- Move Y, resolve ---
+        m_cap.center.y += dy;
+        SolveResult resY = SolveCollisions(map);
+
+        // Ground snap helps slope seams + tile boundaries
         if (!m_grounded && m_wasGrounded && m_vel.y >= 0.0f)
         {
             if (TryGroundSnap(map))
             {
-                // Once snapped, kill tiny downward velocity
                 if (m_vel.y > 0.0f) m_vel.y = 0.0f;
             }
         }
 
-        // slope behavior: if grounded, project velocity onto slope tangent
+        // slope behavior: if grounded, keep velocity along slope tangent
         if (m_grounded)
         {
             eng::Vec2f n = m_groundNormal;
-            eng::Vec2f t = eng::Normalize(eng::Vec2f{ -n.y, n.x }); // tangent
-
+            eng::Vec2f t = eng::Normalize(eng::Vec2f{ -n.y, n.x });
             float speedT = eng::Dot(m_vel, t);
             m_vel = t * speedT;
         }
+
+        if (m_grounded && m_vel.y >= 0.0f)
+        {
+            TryGroundSnap(map);
+        }
+
+        (void)resY;
     }
 
-    void CharacterController::SolveCollisions(const eng::world::Tilemap& map)
+    CharacterController::SolveResult CharacterController::SolveCollisions(const eng::world::Tilemap& map)
     {
-        m_grounded = false;
-        m_groundNormal = { 0, -1 };
+        SolveResult out{};
+        out.grounded = false;
+        out.groundNormal = { 0, -1 };
 
         for (int iter = 0; iter < m_cfg.solverIterations; ++iter)
         {
@@ -79,13 +108,59 @@ namespace eng::gameplay
             if (vn < 0.0f)
                 m_vel = m_vel - c.normal * vn;
 
-            // ground check
+            // classify contact
+            if (std::fabs(c.normal.x) >= 0.90f && std::fabs(c.normal.y) <= 0.25f)
+                out.hitWall = true;
+
+            if (c.normal.y >= m_cfg.ceilingNormalY)
+                out.hitCeiling = true;
+
             if (c.normal.y <= m_cfg.groundNormalY)
             {
-                m_grounded = true;
-                m_groundNormal = c.normal;
+                out.grounded = true;
+                out.groundNormal = c.normal;
             }
         }
+
+        // commit grounded state
+        m_grounded = out.grounded;
+        m_groundNormal = out.groundNormal;
+
+        return out;
+    }
+
+    bool CharacterController::TryStepUp(const eng::world::Tilemap& map, float dx)
+    {
+        const eng::Vec2f start = m_cap.center;
+        const eng::Vec2f velSaved = m_vel;
+
+        // 1) step up
+        m_cap.center.y -= m_cfg.stepHeightPx;
+        SolveResult resUp = SolveCollisions(map);
+
+        // If we immediately hit ceiling hard, abort
+        if (resUp.hitCeiling)
+        {
+            m_cap.center = start;
+            m_vel = velSaved;
+            return false;
+        }
+
+        // 2) move horizontally at stepped height
+        m_cap.center.x += dx;
+        SolveResult resStepX = SolveCollisions(map);
+
+        if (resStepX.hitWall)
+        {
+            // step failed, revert
+            m_cap.center = start;
+            m_vel = velSaved;
+            return false;
+        }
+
+        // 3) optional: try snap down (helps settle onto the new surface)
+        TryGroundSnap(map);
+        return true;
     }
 
     bool CharacterController::TryGroundSnap(const eng::world::Tilemap& map)

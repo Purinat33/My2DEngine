@@ -26,6 +26,10 @@ namespace eng::gameplay
         float snapDistance = 4.0f;     // px
         int solverIterations = 6;
         float groundNormalY = -0.6f;   // normals with y <= this are “ground”
+
+        float stepHeightPx = 12.0f;     // how high we can "step" up (for 64px tiles, 10-14 is good)
+        float wallNormalX = 0.65f;      // |normal.x| above this counts as a wall hit
+        float ceilingNormalY = 0.65f;   // normal.y >= this counts as ceiling
     };
 
     class CharacterController
@@ -49,7 +53,17 @@ namespace eng::gameplay
         void DebugDraw(eng::Renderer2D& r, const eng::world::Tilemap& map) const;
 
     private:
-        void SolveCollisions(const eng::world::Tilemap& map);
+        struct SolveResult
+        {
+            bool hitWall = false;
+            bool hitCeiling = false;
+            bool grounded = false;
+            eng::Vec2f groundNormal{ 0, -1 };
+        };
+
+        SolveResult SolveCollisions(const eng::world::Tilemap& map);
+        bool TryStepUp(const eng::world::Tilemap& map, float dx);
+
         bool TryGroundSnap(const eng::world::Tilemap& map);
 
         ControllerConfig m_cfg{};
