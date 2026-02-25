@@ -1,0 +1,15 @@
+<Project>
+  <!-- vcpkg MSBuild integration (repo-local) -->
+  <Import Project="$(MSBuildThisFileDirectory)vcpkg\scripts\buildsystems\msbuild\vcpkg.props" />
+
+  <PropertyGroup>
+    <!-- Turn on manifest mode (reads vcpkg.json above projects) -->
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+
+    <!-- Force consistent triplet (optional; x64-windows is the normal dynamic CRT triplet) -->
+    <VcpkgTriplet>x64-windows</VcpkgTriplet>
+
+    <!-- Optional: copy dependent DLLs from vcpkg_installed to your output folder -->
+    <VcpkgApplocalDeps>true</VcpkgApplocalDeps>
+  </PropertyGroup>
+</Project>

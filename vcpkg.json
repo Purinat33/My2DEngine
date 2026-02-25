@@ -1,0 +1,14 @@
+  {
+  "name": "my2dengine",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "sdl2",
+    "sdl2-image",
+    "sdl2-ttf",
+    "box2d",
+    "glm",
+    "imgui",
+    "spdlog",
+    "nlohmann-json"
+  ]
+}
