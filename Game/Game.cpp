@@ -1,20 +1,31 @@
-// Game.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+#include <SDL2/SDL.h>
+#include <glm/glm.hpp>
+#include <box2d/box2d.h>
+#include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
-#include <iostream>
-
-int main()
+int main(int, char**)
 {
-    std::cout << "Hello World!\n";
+    spdlog::info("Hello from Game");
+
+    // --- Box2D 3.x (handle-based API) ---
+    b2WorldDef worldDef = b2DefaultWorldDef();
+    worldDef.gravity = { 0.0f, -9.8f };
+
+    b2WorldId worldId = b2CreateWorld(&worldDef);
+
+    // Step the world a few frames
+    for (int i = 0; i < 60; ++i)
+    {
+        b2World_Step(worldId, 1.0f / 60.0f, 4);
+    }
+
+    b2DestroyWorld(worldId);
+    worldId = b2_nullWorldId;
+
+    // --- SDL sanity ---
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Quit();
+
+    return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
