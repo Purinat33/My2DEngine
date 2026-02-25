@@ -25,6 +25,9 @@ public:
         map.Set(10, 8, eng::world::ColliderType::Solid);
         map.Set(11, 8, eng::world::ColliderType::Solid);
 
+        // A "door" trigger rectangle (world px). Put it above the platform.
+        doorTrigger = triggers.AddTrigger(eng::RectF{ 9.0f * 64.0f, 7.0f * 64.0f, 64.0f, 64.0f }, /*kind=*/1);
+
         // controller start
         player.SetPositionPx({ 200.0f, 300.0f });
     }
@@ -35,6 +38,16 @@ public:
         bool jump = eng::input::Input::ConsumePressed(eng::input::Action::Jump);
 
         player.FixedUpdate(dt, moveX, jump, map);
+
+        triggers.Update(player.GetBoundsPx(), triggerEvents);
+        for (const auto& ev : triggerEvents)
+        {
+            if (ev.triggerId == doorTrigger && ev.type == eng::gameplay::TriggerEventType::Enter)
+            {
+                // teleport to start (placeholder for room transition)
+                player.SetPositionPx({ 200.0f, 300.0f });
+            }
+        }
 
         if (eng::input::Input::ConsumePressed(eng::input::Action::DebugToggle))
             showDebug = !showDebug;
@@ -49,6 +62,9 @@ public:
 private:
     eng::world::Tilemap map;
     eng::gameplay::CharacterController player;
+    eng::gameplay::TriggerWorld triggers;
+    std::vector<eng::gameplay::TriggerEvent> triggerEvents;
+    int doorTrigger = 0;
 };
 
 int main(int, char**)

@@ -46,6 +46,15 @@ namespace eng::gameplay
         eng::Vec2f GetVelocityPx() const { return m_vel; }
         bool IsGrounded() const { return m_grounded; }
         eng::Vec2f GroundNormal() const { return m_groundNormal; }
+        eng::RectF GetBoundsPx() const
+        {
+            return eng::RectF{
+                m_cap.center.x - m_cap.radius,
+                m_cap.center.y - m_cap.halfHeight,
+                m_cap.radius * 2.0f,
+                m_cap.halfHeight * 2.0f
+            };
+        }
 
         // moveX: -1..+1, jumpPressed: edge or “pressed this frame”
         void FixedUpdate(float dt, float moveX, bool jumpPressed, const eng::world::Tilemap& map);

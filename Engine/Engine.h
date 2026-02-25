@@ -8,3 +8,4 @@
 #include "Collision/Collision2D.h"
 #include "Gameplay/CharacterController.h"
 #include "Core/Input.h"
+#include "Gameplay/TriggerWorld.h"
