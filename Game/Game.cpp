@@ -1,31 +1,37 @@
-#include <SDL2/SDL.h>
-#include <glm/glm.hpp>
-#include <box2d/box2d.h>
-#include <spdlog/spdlog.h>
-#include <nlohmann/json.hpp>
+#include "Engine.h"
+
+class MyGame final : public eng::IGame
+{
+public:
+    void OnInit() override
+    {
+        // init game state here
+        x = 100;
+        vx = 120; // pixels/sec
+    }
+
+    void FixedUpdate(float dt) override
+    {
+        x += vx * dt;
+        if (x > 900) vx = -vx;
+        if (x < 100) vx = -vx;
+    }
+
+    void Render(eng::Renderer2D& r, float) override
+    {
+        r.DrawRectFilled(eng::RectI{ static_cast<int>(x), 200, 80, 80 }, eng::Color{ 200, 80, 80, 255 });
+    }
+
+private:
+    float x = 0.0f;
+    float vx = 0.0f;
+};
 
 int main(int, char**)
 {
-    spdlog::info("Hello from Game");
+    eng::AppConfig cfg;
+    cfg.title = "My2DEngine - Game";
 
-    // --- Box2D 3.x (handle-based API) ---
-    b2WorldDef worldDef = b2DefaultWorldDef();
-    worldDef.gravity = { 0.0f, -9.8f };
-
-    b2WorldId worldId = b2CreateWorld(&worldDef);
-
-    // Step the world a few frames
-    for (int i = 0; i < 60; ++i)
-    {
-        b2World_Step(worldId, 1.0f / 60.0f, 4);
-    }
-
-    b2DestroyWorld(worldId);
-    worldId = b2_nullWorldId;
-
-    // --- SDL sanity ---
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_Quit();
-
-    return 0;
+    MyGame game;
+    return eng::Run(cfg, game);
 }
