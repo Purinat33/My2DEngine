@@ -45,13 +45,14 @@ namespace my2d
 
     static void DrawSolidPolygon(b2Transform xf, const b2Vec2* verts, int count, float /*radius*/, b2HexColor color, void* ctx)
     {
-        // Transform local verts to world and draw outline
-        std::vector<b2Vec2> w;
-        w.reserve(count);
-        for (int i = 0; i < count; ++i)
-            w.push_back(b2TransformPoint(xf, verts[i]));
+        // Box2D polygons are small (typically <= 8 verts). Use stack to avoid heap churn.
+        b2Vec2 w[16];
+        if (count > 16) count = 16;
 
-        DrawPolygon(w.data(), count, color, ctx);
+        for (int i = 0; i < count; ++i)
+            w[i] = b2TransformPoint(xf, verts[i]);
+
+        DrawPolygon(w, count, color, ctx);
     }
 
     static void DrawSegment(b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* ctx)

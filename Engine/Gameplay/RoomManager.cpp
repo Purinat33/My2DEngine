@@ -157,6 +157,24 @@ namespace my2d
                 auto& pc = m_player.Add<PlatformerControllerComponent>();
                 pc.moveSpeedPx = 320.0f;
 
+                auto& team = m_player.Add<TeamComponent>();
+                team.team = Team::Player;
+
+                auto& hp = m_player.Add<HealthComponent>();
+                hp.maxHp = 5;
+                hp.hp = 5;
+
+                m_player.Add<HurtboxComponent>();
+
+                auto& atk = m_player.Add<MeleeAttackComponent>();
+                atk.attackKey = SDL_SCANCODE_J;
+                atk.damage = 1;
+                atk.activeTime = 0.10f;
+                atk.cooldown = 0.25f;
+                atk.hitboxSizePx = { 48.0f, 28.0f };
+                atk.hitboxOffsetPx = { 52.0f, 0.0f };
+                atk.targetMaskBits = my2d::PhysicsLayers::Enemy;
+
                 Physics_CreateRuntime(*m_scene, engine.GetPhysics(), engine.PixelsPerMeter());
             }
         }

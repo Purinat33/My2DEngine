@@ -37,16 +37,13 @@ namespace my2d
 
         // Cache hit?
         if (auto it = m_textureCache.find(resolved); it != m_textureCache.end())
-        {
-            if (auto existing = it->second.lock())
-                return existing;
-        }
+            return it->second;
 
         auto tex = std::make_shared<Texture2D>();
         if (!tex->LoadFromFile(m_renderer, resolved))
             return {};
 
-        m_textureCache[resolved] = tex;
+        m_textureCache.emplace(resolved, tex);
         return tex;
     }
 

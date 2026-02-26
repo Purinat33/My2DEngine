@@ -17,6 +17,7 @@ namespace my2d
 
         virtual void OnUpdate(Engine& engine, double dt) { (void)engine; (void)dt; }
         virtual void OnFixedUpdate(Engine& engine, double fixedDt) { (void)engine; (void)fixedDt; }
+        virtual void OnPostFixedUpdate(Engine& engine, double fixedDt) { (void)engine; (void)fixedDt; }
         virtual void OnRender(Engine& engine) { (void)engine; }
 
         // Return true if consumed (engine won’t do default handling for input/window).

@@ -26,6 +26,6 @@ namespace my2d
         SDL_Renderer* m_renderer = nullptr;
         std::string m_contentRoot;
 
-        std::unordered_map<std::string, std::weak_ptr<Texture2D>> m_textureCache;
+        std::unordered_map<std::string, std::shared_ptr<Texture2D>> m_textureCache;
     };
 }

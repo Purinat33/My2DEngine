@@ -87,8 +87,8 @@ namespace my2d
         constexpr uint32_t FLIP_V = 0x40000000u;
         constexpr uint32_t FLIP_D = 0x20000000u;
 
-        bool warnedDiagonal = false;
-        bool warnedOutOfBounds = false;
+        static bool warnedDiagonal = false;
+        static bool warnedOutOfBounds = false;
 
         for (int y = minY; y <= maxY; ++y)
         {

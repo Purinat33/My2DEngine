@@ -114,6 +114,9 @@
     <ClInclude Include="Gameplay\RoomManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Gameplay\CombatSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -164,8 +167,11 @@
     <ClCompile Include="Scene\SceneSerializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Gameplay\CombatSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Gameplay\RoomManager.cpp">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

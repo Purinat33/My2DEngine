@@ -24,7 +24,7 @@ namespace my2d
 
         bool IsValid() const { return b2World_IsValid(m_worldId); }
 
-        void Step(float fixedDt, int subSteps = 4)
+        void Step(float fixedDt, int subSteps = 1)
         {
             if (!IsValid()) return;
             b2World_Step(m_worldId, fixedDt, subSteps);

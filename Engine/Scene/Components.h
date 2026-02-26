@@ -289,4 +289,63 @@ namespace my2d
         float radiusPx = 24.0f;
     };
 
+    enum class Team : uint8_t
+    {
+        Neutral = 0,
+        Player,
+        Enemy
+    };
+
+    struct TeamComponent
+    {
+        Team team = Team::Neutral;
+    };
+
+    struct HealthComponent
+    {
+        int maxHp = 10;
+        int hp = 10;
+    };
+
+    struct HurtboxComponent
+    {
+        bool enabled = true;
+    };
+
+    struct InvincibilityComponent
+    {
+        float timer = 0.0f; // seconds remaining
+    };
+
+    struct MeleeAttackComponent
+    {
+        // input
+        SDL_Scancode attackKey = SDL_SCANCODE_J;
+
+        // tuning
+        int damage = 1;
+        float activeTime = 0.10f;   // seconds hitbox exists
+        float cooldown = 0.25f;     // seconds between swings
+
+        // hitbox in pixels (relative to body origin = collider center)
+        glm::vec2 hitboxSizePx{ 48.0f, 28.0f };
+        glm::vec2 hitboxOffsetPx{ 48.0f, 0.0f }; // positive X = to the right
+
+        // knockback
+        float knockbackSpeedPx = 420.0f;
+        float knockbackUpPx = 140.0f;
+
+        // i-frames on victim
+        float victimInvuln = 0.25f;
+
+        // who can this hit (physics category bits)
+        uint64_t targetMaskBits = my2d::PhysicsLayers::Enemy;
+
+        // runtime
+        float activeTimer = 0.0f;
+        float cooldownTimer = 0.0f;
+        b2ShapeId hitboxShapeId = b2_nullShapeId;
+        void* runtimeUserData = nullptr; // HitboxRuntime*
+    };
+
 }

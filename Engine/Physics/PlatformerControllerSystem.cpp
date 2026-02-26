@@ -181,8 +181,5 @@ namespace my2d
 
             b2Body_SetLinearVelocity(rb.bodyId, v);
         }
-
-        // Sync transforms for rendering (so you don't have to do it in Game::OnUpdate)
-        Physics_SyncTransforms(scene, engine.PixelsPerMeter());
     }
 }

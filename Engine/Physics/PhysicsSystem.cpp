@@ -66,6 +66,7 @@ namespace my2d
             bd.angularDamping = rb.angularDamping;
 
             rb.bodyId = b2CreateBody(physics.WorldId(), &bd);
+            b2Body_SetUserData(rb.bodyId, (void*)(uintptr_t)(uint32_t)e);
 
             b2ShapeDef sd = b2DefaultShapeDef();
             sd.density = bc.density;
@@ -81,6 +82,7 @@ namespace my2d
             // Box shape centered on body origin (no local offset because we baked it into bd.position)
             b2Polygon box = b2MakeBox(halfW, halfH);
             bc.shapeId = b2CreatePolygonShape(rb.bodyId, &sd, &box);
+            b2Shape_SetUserData(bc.shapeId, (void*)(uintptr_t)(uint32_t)e);
         }
     }
 

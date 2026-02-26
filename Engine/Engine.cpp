@@ -162,8 +162,9 @@ namespace my2d
 
             while (m_fixedAccumulator >= fixedDt)
             {
-                app.OnFixedUpdate(*this, fixedDt);
-                m_physics.Step((float)fixedDt);
+                app.OnFixedUpdate(*this, fixedDt);      // pre-step: set velocities, spawn hitboxes, etc.
+                m_physics.Step((float)fixedDt);         // step physics
+                app.OnPostFixedUpdate(*this, fixedDt);  // post-step: process sensor events + sync transforms
                 m_fixedAccumulator -= fixedDt;
             }
 

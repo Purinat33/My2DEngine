@@ -59,7 +59,7 @@ namespace my2d
         PhysicsWorld m_physics;
         PhysicsDebugDraw m_physicsDebug;
         float m_pixelsPerMeter = 100.0f;
-        bool m_drawPhysicsDebug = true;
+        bool m_drawPhysicsDebug = false;
         b2Vec2 m_gravity{ 0.0f, 9.8f };
         std::string m_contentRoot;
 

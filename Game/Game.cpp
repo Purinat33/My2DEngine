@@ -14,6 +14,9 @@
 #include "Physics/PlatformerControllerSystem.h"
 #include "Physics/PhysicsLayers.h"
 
+#include "Gameplay/CombatSystem.h"
+#include "Physics/PhysicsSystem.h"
+
 class MyGame : public my2d::App
 {
 public:
@@ -66,8 +69,14 @@ public:
 
     void OnFixedUpdate(my2d::Engine& engine, double fixedDt) override
     {
-        // Platformer controller operates on the current room scene
         my2d::PlatformerController_FixedUpdate(engine, m_rooms.GetScene(), (float)fixedDt);
+        my2d::Combat_PrePhysics(engine, m_rooms.GetScene(), (float)fixedDt);
+    }
+
+    void OnPostFixedUpdate(my2d::Engine& engine, double fixedDt) override
+    {
+        my2d::Combat_PostPhysics(engine, m_rooms.GetScene(), (float)fixedDt);
+        my2d::Physics_SyncTransforms(m_rooms.GetScene(), engine.PixelsPerMeter());
     }
 
     void OnRender(my2d::Engine& engine) override
@@ -245,6 +254,38 @@ private:
             gbc.size = gspr.size;
             gbc.categoryBits = my2d::PhysicsLayers::Environment;
             gbc.maskBits = my2d::PhysicsLayers::Player;
+
+            // --- Simple enemy dummy ---
+            auto enemy = s.CreateEntity("DummyEnemy");
+            enemy.Get<my2d::TransformComponent>().position = { 140.0f, -200.0f };
+
+            auto& espr = enemy.Add<my2d::SpriteRendererComponent>();
+            espr.texturePath = "test.png";
+            espr.size = { 48.0f, 48.0f };
+            espr.layer = 0;
+            espr.tint = SDL_Color{ 255, 200, 80, 255 };
+
+            auto& eteam = enemy.Add<my2d::TeamComponent>();
+            eteam.team = my2d::Team::Enemy;
+
+            auto& ehp = enemy.Add<my2d::HealthComponent>();
+            ehp.maxHp = 3;
+            ehp.hp = 3;
+
+            enemy.Add<my2d::HurtboxComponent>();
+
+            auto& erb = enemy.Add<my2d::RigidBody2DComponent>();
+            erb.type = my2d::BodyType2D::Dynamic;
+            erb.fixedRotation = true;
+            erb.enableSleep = false;
+            erb.gravityScale = 0.0f; // stay in place
+
+            auto& ebc = enemy.Add<my2d::BoxCollider2DComponent>();
+            ebc.size = espr.size;
+            ebc.density = 1.0f;
+            ebc.friction = 0.0f;
+            ebc.categoryBits = my2d::PhysicsLayers::Enemy;
+            ebc.maskBits = my2d::PhysicsLayers::Player | my2d::PhysicsLayers::Hitbox | my2d::PhysicsLayers::Environment;
 
             my2d::SceneSerializer::SaveToFile(s, roomAPath.string());
         }
