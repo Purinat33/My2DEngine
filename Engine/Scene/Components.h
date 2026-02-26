@@ -155,6 +155,19 @@ namespace my2d
         SDL_Scancode left = SDL_SCANCODE_A;
         SDL_Scancode right = SDL_SCANCODE_D;
         SDL_Scancode jump = SDL_SCANCODE_SPACE;
+        SDL_Scancode dash = SDL_SCANCODE_LSHIFT;
+
+        // dash tuning
+        float dashSpeedPx = 850.0f;
+        float dashTime = 0.12f;
+        float dashCooldown = 0.25f;
+
+        // runtime
+        int facing = 1;               // -1 left, +1 right
+        bool isDashing = false;
+        float dashTimer = 0.0f;
+        float dashCooldownTimer = 0.0f;
+        int dashDir = 1;
 
         float maxGroundSlopeDeg = 55.0f; // consider grounded up to this
         float maxJumpSlopeDeg = 5.0f;    // only allow jump on very flat ground

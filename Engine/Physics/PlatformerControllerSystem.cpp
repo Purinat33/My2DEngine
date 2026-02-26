@@ -128,11 +128,45 @@ namespace my2d
             if (engine.GetInput().IsKeyDown(pc.right)) axis += 1.0f;
 
             const float ppm = engine.PixelsPerMeter();
+
+            // Cooldown timers
+            pc.dashCooldownTimer = std::max(0.0f, pc.dashCooldownTimer - fixedDt);
+
+            const bool hasDash = engine.GetWorldState().HasAbility(AbilityId::Dash);
+
+            // Track facing based on input
+            if (axis < -0.01f) pc.facing = -1;
+            else if (axis > 0.01f) pc.facing = 1;
+
+            // Start dash (only if ability unlocked)
+            if (hasDash && !pc.isDashing && pc.dashCooldownTimer <= 0.0f && engine.GetInput().WasKeyPressed(pc.dash))
+            {
+                pc.isDashing = true;
+                pc.dashTimer = pc.dashTime;
+                pc.dashCooldownTimer = pc.dashCooldown;
+
+                pc.dashDir = (axis < -0.01f) ? -1 : (axis > 0.01f ? 1 : pc.facing);
+            }
+
+            // During dash, override horizontal velocity
+            if (pc.isDashing)
+            {
+                pc.dashTimer -= fixedDt;
+                const float dashV = pc.dashSpeedPx / ppm; // m/s
+                v.x = pc.dashDir * dashV;
+
+                if (pc.dashTimer <= 0.0f)
+                    pc.isDashing = false;
+            }
+
             const float maxSpeed = pc.moveSpeedPx / ppm;     // m/s
             const float accel = pc.accelPx / ppm;           // m/s^2
             const float decel = pc.decelPx / ppm;
-
-            const float targetX = axis * maxSpeed;
+            float targetX = 0.0f;
+            if (!pc.isDashing)
+            {
+                targetX = axis * maxSpeed;
+            }
             const float maxDelta = (std::abs(axis) > 0.01f ? accel : decel) * fixedDt;
             v.x = MoveTowards(v.x, targetX, maxDelta);
 
