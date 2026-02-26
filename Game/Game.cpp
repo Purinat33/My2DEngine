@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "Scene/Scene.h"
 #include <spdlog/spdlog.h>
+#include "Physics/TilemapColliderBuilder.h"
 
 class MyGame : public my2d::App
 {
@@ -8,12 +9,16 @@ public:
     bool OnInit(my2d::Engine& engine) override
     {
         m_scene = std::make_unique<my2d::Scene>();
+        
 
         auto tmEnt = m_scene->CreateEntity("Tilemap");
         auto& tmT = tmEnt.Get<my2d::TransformComponent>();
         tmT.position = { -400.0f, -200.0f }; // move map so origin isn’t centered
 
         auto& tm = tmEnt.Add<my2d::TilemapComponent>();
+        auto& tmc = tmEnt.Add<my2d::TilemapColliderComponent>();
+        tmc.collisionLayerIndex = 0; // whichever layer is your solid tiles
+        tmc.friction = 0.9f;
         tm.width = 50;
         tm.height = 25;
         tm.tileWidth = 32;
@@ -43,6 +48,8 @@ public:
         }
 
         tm.layers.push_back(std::move(base));
+
+        my2d::BuildTilemapColliders(engine.GetPhysics(), *m_scene, engine.PixelsPerMeter());
 
         auto e = m_scene->CreateEntity("TestSprite");
         auto& t = e.Get<my2d::TransformComponent>();
@@ -82,6 +89,15 @@ public:
 
     void OnRender(my2d::Engine& engine) override
     {
+        if (engine.DrawPhysicsDebug())
+        {
+            engine.GetPhysicsDebugDraw().Draw(
+                engine.GetSDLRenderer(),
+                engine.GetPhysics().WorldId(),
+                engine.PixelsPerMeter(),
+                engine.GetRenderer2D().GetCamera()
+            );
+        }
         m_scene->OnRender(engine);
     }
 

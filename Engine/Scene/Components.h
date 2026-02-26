@@ -4,6 +4,9 @@
 
 #include <glm/vec2.hpp>
 #include "Platform/Sdl.h"
+#include "Physics/Box2D.h"
+
+class b2Body;
 
 namespace my2d
 {
@@ -69,5 +72,17 @@ namespace my2d
         // Populated at runtime from window size for culling (kept here to avoid threading more params)
         int viewportW = 0;
         int viewportH = 0;
+    };
+
+
+    struct TilemapColliderComponent
+    {
+        int collisionLayerIndex = 0;
+        float friction = 0.8f;
+        float restitution = 0.0f;
+        bool isSensor = false;
+
+        // runtime (Box2D 3.x uses ids/handles)
+        std::vector<b2BodyId> runtimeBodies;
     };
 }

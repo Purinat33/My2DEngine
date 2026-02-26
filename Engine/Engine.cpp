@@ -77,6 +77,11 @@ namespace my2d
         m_renderer2d.SetRenderer(m_window.GetSDLRenderer());
         m_renderer2d.SetViewport(m_window.Width(), m_window.Height());
 
+        m_pixelsPerMeter = config.pixelsPerMeter;
+        m_drawPhysicsDebug = config.drawPhysicsDebug;
+
+        m_physics.Initialize(b2Vec2(config.gravityX, config.gravityY));
+
         m_time.Reset(SDL_GetPerformanceCounter());
         m_fixedAccumulator = 0.0;
         m_quitRequested = false;
@@ -97,6 +102,7 @@ namespace my2d
 
         TTF_Quit();
         IMG_Quit();
+        m_physics.Shutdown();
         SDL_Quit();
 
         m_initialized = false;
@@ -155,6 +161,7 @@ namespace my2d
             while (m_fixedAccumulator >= fixedDt)
             {
                 app.OnFixedUpdate(*this, fixedDt);
+                m_physics.Step((float)fixedDt);
                 m_fixedAccumulator -= fixedDt;
             }
 

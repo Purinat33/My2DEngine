@@ -150,6 +150,10 @@
     <ClInclude Include="Core\Time.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Physics\Box2D.h" />
+    <ClInclude Include="Physics\PhysicsDebugDraw.h" />
+    <ClInclude Include="Physics\PhysicsWorld.h" />
+    <ClInclude Include="Physics\TilemapColliderBuilder.h" />
     <ClInclude Include="Platform\Sdl.h" />
     <ClInclude Include="Platform\SdlImage.h" />
     <ClInclude Include="Platform\SdlTtf.h" />
@@ -168,6 +172,8 @@
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Physics\PhysicsDebugDraw.cpp" />
+    <ClCompile Include="Physics\TilemapColliderBuilder.cpp" />
     <ClCompile Include="Renderer\Renderer2D.cpp" />
     <ClCompile Include="Renderer\Texture2D.cpp" />
     <ClCompile Include="Renderer\TilemapRenderer2D.cpp" />
