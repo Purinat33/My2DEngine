@@ -22,6 +22,11 @@ namespace my2d
         float victimInvuln = 0.25f;
         uint64_t targetMaskBits = 0;
 
+        int dirX = 1;   // -1,0,1
+        int dirY = 0;   // -1 up, 0 side, +1 down
+        bool pogoOnDownHit = false;
+        float pogoReboundSpeed = 0.0f; // m/s
+
         // prevent multi-hit from same swing
         std::vector<uint32_t> hitOnce;
     };
@@ -107,15 +112,51 @@ namespace my2d
                 const float ppm = engine.PixelsPerMeter();
                 const int facing = FacingFor(reg, e);
 
-                const float halfW = (atk.hitboxSizePx.x * 0.5f) / ppm;
-                const float halfH = (atk.hitboxSizePx.y * 0.5f) / ppm;
+                // Decide attack direction (default = horizontal by facing)
+                int dirX = facing;
+                int dirY = 0;
+
+                // If you have a platformer controller, use grounded state for down-attack restriction
+                bool grounded = false;
+                if (reg.any_of<PlatformerControllerComponent>(e))
+                    grounded = reg.get<PlatformerControllerComponent>(e).grounded;
+
+                glm::vec2 sizePx = atk.hitboxSizePx;
+                glm::vec2 offsetPx = atk.hitboxOffsetPx;
+
+                // Aim up/down (hold aim key + press attack)
+                if (atk.allowAimUp && engine.GetInput().IsKeyDown(atk.aimUpKey))
+                {
+                    dirX = 0;
+                    dirY = -1;
+
+                    // Use custom up size/offset if provided
+                    if (atk.hitboxSizeUpPx.x > 0 && atk.hitboxSizeUpPx.y > 0) sizePx = atk.hitboxSizeUpPx;
+                    offsetPx = atk.hitboxOffsetUpPx;
+                }
+                else if (atk.allowAimDown && engine.GetInput().IsKeyDown(atk.aimDownKey) &&
+                    (atk.allowDownAttackOnGround || !grounded))
+                {
+                    dirX = 0;
+                    dirY = +1;
+
+                    if (atk.hitboxSizeDownPx.x > 0 && atk.hitboxSizeDownPx.y > 0) sizePx = atk.hitboxSizeDownPx;
+                    offsetPx = atk.hitboxOffsetDownPx;
+                }
+
+                // Convert to meters
+                const float halfW = (sizePx.x * 0.5f) / ppm;
+                const float halfH = (sizePx.y * 0.5f) / ppm;
+
+                // For vertical attacks, you often want a slight forward bias; multiply X offset by facing
+                const float xBias = (float)facing;
 
                 b2Vec2 centerLocal = b2Vec2{
-                    (atk.hitboxOffsetPx.x * (float)facing) / ppm,
-                    (atk.hitboxOffsetPx.y) / ppm
+                    (offsetPx.x * xBias) / ppm,
+                    (offsetPx.y) / ppm
                 };
 
-                // Build offset box polygon (local-space offset on the same body)
+                // Offset box polygon (on the same body)
                 b2Polygon poly = b2MakeOffsetBox(halfW, halfH, centerLocal, b2MakeRot(0.0f));
 
                 b2ShapeDef sd = b2DefaultShapeDef();
@@ -135,6 +176,10 @@ namespace my2d
                 rt->knockbackUp = atk.knockbackUpPx / ppm;
                 rt->victimInvuln = atk.victimInvuln;
                 rt->targetMaskBits = atk.targetMaskBits;
+                rt->dirX = dirX;
+                rt->dirY = dirY;
+                rt->pogoOnDownHit = atk.pogoOnDownHit;
+                rt->pogoReboundSpeed = atk.pogoReboundSpeedPx / ppm;
 
                 atk.runtimeUserData = rt;
                 b2Shape_SetUserData(atk.hitboxShapeId, rt);
@@ -232,9 +277,40 @@ namespace my2d
                     }
 
                     b2Vec2 vel = b2Body_GetLinearVelocity(vrb.bodyId);
-                    vel.x = dir * rt->knockbackSpeed;
-                    vel.y = -rt->knockbackUp;
+
+                    if (rt->dirY == -1) // up attack
+                    {
+                        vel.x = 0.0f;
+                        vel.y = -rt->knockbackUp;
+                    }
+                    else if (rt->dirY == +1) // down attack
+                    {
+                        vel.x = 0.0f;
+                        vel.y = +rt->knockbackUp; // down is +Y
+                    }
+                    else // side attack
+                    {
+                        vel.x = dir * rt->knockbackSpeed;
+                        vel.y = -rt->knockbackUp;
+                    }
+
                     b2Body_SetLinearVelocity(vrb.bodyId, vel);
+                }
+                // Optional pogo rebound when down-attacking something (only makes sense mid-air)
+                if (rt->dirY == +1 && rt->pogoOnDownHit && rt->pogoReboundSpeed > 0.0f)
+                {
+                    if (reg.any_of<RigidBody2DComponent>(rt->owner) && reg.any_of<PlatformerControllerComponent>(rt->owner))
+                    {
+                        auto& ownerRb = reg.get<RigidBody2DComponent>(rt->owner);
+                        auto& ownerPc = reg.get<PlatformerControllerComponent>(rt->owner);
+
+                        if (!ownerPc.grounded && b2Body_IsValid(ownerRb.bodyId))
+                        {
+                            b2Vec2 ov = b2Body_GetLinearVelocity(ownerRb.bodyId);
+                            ov.y = -rt->pogoReboundSpeed;
+                            b2Body_SetLinearVelocity(ownerRb.bodyId, ov);
+                        }
+                    }
                 }
             }
 

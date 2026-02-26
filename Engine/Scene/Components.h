@@ -331,6 +331,26 @@ namespace my2d
         glm::vec2 hitboxSizePx{ 48.0f, 28.0f };
         glm::vec2 hitboxOffsetPx{ 48.0f, 0.0f }; // positive X = to the right
 
+        // aim (hold key + press attack)
+        bool allowAimUp = true;
+        bool allowAimDown = true;
+        bool allowDownAttackOnGround = true;
+
+        // Default aim keys. If W conflicts with door interact, change these to UP/DOWN in your game.
+        SDL_Scancode aimUpKey = SDL_SCANCODE_W;
+        SDL_Scancode aimDownKey = SDL_SCANCODE_S;
+
+        // Up/down hitboxes (pixels). If you don't set them, we fall back to the horizontal one.
+        glm::vec2 hitboxSizeUpPx{ 28.0f, 48.0f };
+        glm::vec2 hitboxOffsetUpPx{ 0.0f, -52.0f };
+
+        glm::vec2 hitboxSizeDownPx{ 28.0f, 48.0f };
+        glm::vec2 hitboxOffsetDownPx{ 0.0f, 52.0f };
+
+        // Optional: pogo rebound when down attack hits (classic HK)
+        bool pogoOnDownHit = true;
+        float pogoReboundSpeedPx = 520.0f;
+
         // knockback
         float knockbackSpeedPx = 420.0f;
         float knockbackUpPx = 140.0f;
