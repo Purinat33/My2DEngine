@@ -110,6 +110,8 @@ namespace my2d
     {
         BodyType2D type = BodyType2D::Dynamic;
 
+        bool enabled = true;
+
         bool fixedRotation = true;
         bool enableSleep = true;
         bool isBullet = false;
@@ -128,13 +130,68 @@ namespace my2d
         glm::vec2 size{ 32.0f, 32.0f };
         glm::vec2 offset{ 0.0f, 0.0f };
 
+        bool enabled = true;
+
         float density = 1.0f;
         float friction = 0.2f;
         float restitution = 0.0f;
         bool isSensor = false;
 
+        // Collision filtering (Box2D 3.x uses 64-bit category/mask bits)
+        // Defaults match the current player-vs-environment setup.
+        uint64_t categoryBits = my2d::PhysicsLayers::Player;
+        uint64_t maskBits = my2d::PhysicsLayers::Environment;
+
         // runtime
         b2ShapeId shapeId = b2_nullShapeId;
+    };
+
+    enum class GateOpenBehavior
+    {
+        DisableCollider,          // default: keep entity, remove collision
+        DisableColliderAndHide,   // collision off + sprite alpha 0
+        DestroyEntity             // rare hard requirement
+    };
+
+    struct GateComponent
+    {
+        // Conditions (optional). If all lists are empty => always satisfied.
+        std::vector<AbilityId> requireAllAbilities;
+        std::vector<AbilityId> requireAnyAbilities;
+
+        std::vector<std::string> requireAllFlags;
+        std::vector<std::string> requireAnyFlags;
+
+        bool invert = false;
+
+        // If true: satisfied => open. If false: satisfied => closed.
+        bool openWhenSatisfied = true;
+
+        GateOpenBehavior openBehavior = GateOpenBehavior::DisableCollider;
+
+        // Visual feedback (optional)
+        bool overrideTint = true;
+        SDL_Color closedTint{ 255, 120, 120, 255 };
+        SDL_Color openTint{ 120, 255, 120, 200 };
+
+        bool hideWhenOpen = false;
+
+        // runtime
+        bool initialized = false;
+        bool isOpen = false;
+    };
+
+    // Legacy
+    // Remove entity when the world state contains the condition.
+    // Used for gates/doors/blockers that should disappear when an ability/flag is acquired.
+    struct RemoveIfHasAbilityComponent
+    {
+        AbilityId ability = AbilityId::Dash;
+    };
+
+    struct RemoveIfHasFlagComponent
+    {
+        std::string flag;
     };
 
     struct PlatformerControllerComponent
@@ -160,7 +217,7 @@ namespace my2d
         // dash tuning
         float dashSpeedPx = 850.0f;
         float dashTime = 0.12f;
-        float dashCooldown = 0.25f;
+        float dashCooldown = 0.35f;
 
         // runtime
         int facing = 1;               // -1 left, +1 right

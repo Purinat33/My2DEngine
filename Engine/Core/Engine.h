@@ -29,6 +29,7 @@ namespace my2d
         void Shutdown();
 
         int Run(const EngineConfig& config, App& app);
+        void ResetPhysicsWorld();
 
         void RequestQuit();
 
@@ -58,6 +59,7 @@ namespace my2d
         PhysicsDebugDraw m_physicsDebug;
         float m_pixelsPerMeter = 100.0f;
         bool m_drawPhysicsDebug = true;
+        b2Vec2 m_gravity{ 0.0f, 9.8f };
 
         WorldState m_worldState;
 

@@ -150,6 +150,7 @@
     <ClInclude Include="Core\Time.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Gameplay\Ability.h" />
+    <ClInclude Include="Gameplay\GateSystem.h" />
     <ClInclude Include="Gameplay\ProgressionSystem.h" />
     <ClInclude Include="Gameplay\SaveGame.h" />
     <ClInclude Include="Gameplay\WorldState.h" />
@@ -176,6 +177,7 @@
   <ItemGroup>
     <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="Gameplay\GateSystem.cpp" />
     <ClCompile Include="Gameplay\ProgressionSystem.cpp" />
     <ClCompile Include="Gameplay\SaveGame.cpp" />
     <ClCompile Include="Gameplay\WorldState.cpp" />

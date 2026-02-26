@@ -162,13 +162,13 @@ namespace my2d
             const float maxSpeed = pc.moveSpeedPx / ppm;     // m/s
             const float accel = pc.accelPx / ppm;           // m/s^2
             const float decel = pc.decelPx / ppm;
-            float targetX = 0.0f;
+
             if (!pc.isDashing)
             {
-                targetX = axis * maxSpeed;
+                const float targetX = axis * maxSpeed;
+                const float maxDelta = (std::abs(axis) > 0.01f ? accel : decel) * fixedDt;
+                v.x = MoveTowards(v.x, targetX, maxDelta);
             }
-            const float maxDelta = (std::abs(axis) > 0.01f ? accel : decel) * fixedDt;
-            v.x = MoveTowards(v.x, targetX, maxDelta);
 
             // --- Jump ---
             if (pc.jumpBufferTimer > 0.0f && pc.coyoteTimer > 0.0f)

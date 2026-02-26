@@ -34,6 +34,17 @@ namespace my2d
             auto& rb = view.get<RigidBody2DComponent>(e);
             auto& bc = view.get<BoxCollider2DComponent>(e);
 
+            if (!rb.enabled || !bc.enabled)
+            {
+                // If something disabled this collider (gate open), ensure runtime is gone.
+                if (b2Body_IsValid(rb.bodyId))
+                    b2DestroyBody(rb.bodyId);
+
+                rb.bodyId = b2_nullBodyId;
+                bc.shapeId = b2_nullShapeId;
+                continue;
+            }
+
             if (b2Body_IsValid(rb.bodyId))
                 continue;
 
@@ -61,8 +72,8 @@ namespace my2d
             sd.material.friction = bc.friction;
             sd.material.restitution = bc.restitution;
             sd.isSensor = bc.isSensor;
-            sd.filter.categoryBits = my2d::PhysicsLayers::Player;
-            sd.filter.maskBits = my2d::PhysicsLayers::Environment;
+            sd.filter.categoryBits = bc.categoryBits;
+            sd.filter.maskBits = bc.maskBits;
 
             const float halfW = (bc.size.x * 0.5f) / ppm;
             const float halfH = (bc.size.y * 0.5f) / ppm;
@@ -84,6 +95,9 @@ namespace my2d
             auto& rb = view.get<RigidBody2DComponent>(e);
             auto& bc = view.get<BoxCollider2DComponent>(e);
 
+            if (!rb.enabled || !bc.enabled)
+                continue;
+
             if (!b2Body_IsValid(rb.bodyId))
                 continue;
 
@@ -99,6 +113,27 @@ namespace my2d
             // Rotation (optional if fixedRotation is true, but harmless)
             const float angleRad = std::atan2(rot.s, rot.c);
             tc.rotationDeg = RadToDeg(angleRad);
+        }
+    }
+
+    void Physics_DestroyRuntimeForEntity(Scene& scene, entt::entity e)
+    {
+        auto& reg = scene.Registry();
+        if (!reg.valid(e))
+            return;
+
+        if (reg.any_of<RigidBody2DComponent>(e))
+        {
+            auto& rb = reg.get<RigidBody2DComponent>(e);
+            if (b2Body_IsValid(rb.bodyId))
+                b2DestroyBody(rb.bodyId);
+            rb.bodyId = b2_nullBodyId;
+        }
+
+        if (reg.any_of<BoxCollider2DComponent>(e))
+        {
+            auto& bc = reg.get<BoxCollider2DComponent>(e);
+            bc.shapeId = b2_nullShapeId;
         }
     }
 }

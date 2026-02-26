@@ -10,4 +10,6 @@ namespace my2d
 
 	// Pull body transforms back into TransformComponent for rendering
 	void Physics_SyncTransforms(Scene& scene, float pixelsPerMeter);
+
+	void Physics_DestroyRuntimeForEntity(Scene& scene, entt::entity e);
 }

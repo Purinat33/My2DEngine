@@ -1,31 +1,121 @@
 #include "framework.h"
 #include "Scene/Scene.h"
+
 #include <spdlog/spdlog.h>
+
 #include "Physics/TilemapColliderBuilder.h"
 #include "Physics/PhysicsSystem.h"
 #include "Physics/PlatformerControllerSystem.h"
+
 #include "Gameplay/ProgressionSystem.h"
+#include "Gameplay/SaveGame.h"
+#include "Gameplay/GateSystem.h"
 
 class MyGame : public my2d::App
 {
 public:
     bool OnInit(my2d::Engine& engine) override
     {
-        m_scene = std::make_unique<my2d::Scene>();
-        
+        my2d::SaveGame save;
+        if (my2d::SaveGame::LoadFromFile(m_savePath, save))
+        {
+            engine.GetWorldState() = save.world;
+            spdlog::info("Loaded save from '{}'", m_savePath);
+        }
+        else
+        {
+            spdlog::info("No save found at '{}' (starting fresh)", m_savePath);
+        }
 
+        BuildTestScene(engine);
+        return true;
+    }
+
+    void OnUpdate(my2d::Engine& engine, double dt) override
+    {
+        (void)dt;
+
+        my2d::Progression_Update(engine, *m_scene, m_player);
+        my2d::GateSystem_Update(engine, *m_scene);
+
+        if (engine.GetInput().WasKeyPressed(SDL_SCANCODE_F5))
+        {
+            my2d::SaveGame save;
+            save.world = engine.GetWorldState();
+            if (save.SaveToFile(m_savePath))
+                spdlog::info("Saved to '{}'", m_savePath);
+            else
+                spdlog::error("Failed to save to '{}'", m_savePath);
+        }
+
+        if (engine.GetInput().WasKeyPressed(SDL_SCANCODE_F9))
+        {
+            my2d::SaveGame save;
+            if (my2d::SaveGame::LoadFromFile(m_savePath, save))
+            {
+                engine.GetWorldState() = save.world;
+                spdlog::info("Reloaded save from '{}'", m_savePath);
+                BuildTestScene(engine);
+            }
+            else
+            {
+                spdlog::warn("No save found at '{}'", m_savePath);
+            }
+        }
+
+        if (engine.GetInput().WasKeyPressed(SDL_SCANCODE_F8))
+        {
+            engine.GetWorldState() = my2d::WorldState{};
+            spdlog::info("Cleared world state");
+            BuildTestScene(engine);
+        }
+
+        if (engine.GetInput().WasKeyPressed(SDL_SCANCODE_ESCAPE))
+            engine.RequestQuit();
+
+        auto& cam = engine.GetRenderer2D().GetCamera();
+        cam.SetPosition(m_player.Get<my2d::TransformComponent>().position);
+    }
+
+    void OnFixedUpdate(my2d::Engine& engine, double fixedDt) override
+    {
+        my2d::PlatformerController_FixedUpdate(engine, *m_scene, (float)fixedDt);
+    }
+
+    void OnRender(my2d::Engine& engine) override
+    {
+        if (engine.DrawPhysicsDebug())
+        {
+            engine.GetPhysicsDebugDraw().Draw(
+                engine.GetSDLRenderer(),
+                engine.GetPhysics().WorldId(),
+                engine.PixelsPerMeter(),
+                engine.GetRenderer2D().GetCamera()
+            );
+        }
+
+        m_scene->OnRender(engine);
+    }
+
+private:
+    void BuildTestScene(my2d::Engine& engine)
+    {
+        engine.ResetPhysicsWorld();
+        m_scene = std::make_unique<my2d::Scene>();
+
+        // --- Tilemap ---
         auto tmEnt = m_scene->CreateEntity("Tilemap");
         auto& tmT = tmEnt.Get<my2d::TransformComponent>();
-        tmT.position = { -400.0f, -200.0f }; // move map so origin isn’t centered
+        tmT.position = { -400.0f, -200.0f };
 
         auto& tm = tmEnt.Add<my2d::TilemapComponent>();
         auto& tmc = tmEnt.Add<my2d::TilemapColliderComponent>();
-        // Example slope tile indices (change these to match your tileset)
         tmc.slopeUpRightTiles = { 2 };
         tmc.slopeUpLeftTiles = { 3 };
         tmc.slopeFriction = 0.02f;
-        tmc.collisionLayerIndex = 0; // whichever layer is your solid tiles
+        tmc.collisionLayerIndex = 0;
         tmc.friction = 0.9f;
+
         tm.width = 50;
         tm.height = 25;
         tm.tileWidth = 32;
@@ -40,55 +130,32 @@ public:
 
         my2d::TileLayer base;
         base.name = "Base";
-        base.layer = -10; // behind sprites
+        base.layer = -10;
         base.tiles.assign(tm.width * tm.height, -1);
 
-        // simple pattern
         for (int y = 0; y < tm.height; ++y)
         {
             for (int x = 0; x < tm.width; ++x)
             {
                 const int idx = y * tm.width + x;
-                if (y == tm.height - 1) base.tiles[idx] = 1;         // ground row
-                else if ((x + y) % 17 == 0) base.tiles[idx] = 5;     // dots
+                if (y == tm.height - 1) base.tiles[idx] = 1;
+                else if ((x + y) % 17 == 0) base.tiles[idx] = 5;
             }
         }
 
         tm.layers.push_back(std::move(base));
-
         my2d::BuildTilemapColliders(engine.GetPhysics(), *m_scene, engine.PixelsPerMeter());
-        
 
+        // --- Player ---
         m_player = m_scene->CreateEntity("Player");
         auto& t = m_player.Get<my2d::TransformComponent>();
-        t.position = { 0.0f, -200.0f }; // start above the ground so you can see it fall
+        t.position = { 0.0f, -200.0f };
 
         auto& s = m_player.Add<my2d::SpriteRendererComponent>();
         s.texturePath = "test.png";
         s.size = { 64.0f, 64.0f };
         s.layer = 0;
 
-        auto pickup = m_scene->CreateEntity("DashPickup");
-        pickup.Get<my2d::TransformComponent>().position = { 200.0f, -220.0f };
-
-        auto& spr = pickup.Add<my2d::SpriteRendererComponent>();
-        spr.texturePath = "test.png";
-        spr.size = { 32.0f, 32.0f };
-        spr.layer = 1;
-
-        auto& pf = pickup.Add<my2d::PersistentFlagComponent>();
-        pf.flag = "pickup_dash";
-
-        auto& gp = pickup.Add<my2d::GrantProgressionComponent>();
-        gp.setFlag = "pickup_dash";
-        gp.unlockAbility = true;
-        gp.ability = my2d::AbilityId::Dash;
-        gp.radiusPx = 32.0f;
-
-        // After you build the scene:
-        my2d::Progression_ApplyPersistence(engine, *m_scene);
-
-        // Physics
         auto& rb = m_player.Add<my2d::RigidBody2DComponent>();
         rb.enableSleep = false;
         rb.type = my2d::BodyType2D::Dynamic;
@@ -98,71 +165,85 @@ public:
         auto& box = m_player.Add<my2d::BoxCollider2DComponent>();
         box.size = s.size;
         box.density = 1.0f;
-        box.friction = 0.0f; // player shouldn't "stick" on walls
+        box.friction = 0.0f;
 
         auto& pc = m_player.Add<my2d::PlatformerControllerComponent>();
         pc.moveSpeedPx = 320.0f;
-        
-        // --- One-shot jump height tuning ---
-        const float desiredJumpHeightPx = 200.0f; // try 120..180 depending on feel
 
-        // gravity is in m/s^2, convert to px/s^2
-        b2Vec2 g = b2World_GetGravity(engine.GetPhysics().WorldId()); // Box2D 3.x
+        const float desiredJumpHeightPx = 200.0f;
+        b2Vec2 g = b2World_GetGravity(engine.GetPhysics().WorldId());
         const float gPx = std::abs(g.y) * engine.PixelsPerMeter() * rb.gravityScale;
-
-        // v = sqrt(2*g*h)
         pc.jumpSpeedPx = std::sqrt(2.0f * gPx * desiredJumpHeightPx);
 
         pc.coyoteTime = 0.10f;
         pc.jumpBufferTime = 0.12f;
         pc.groundCheckDistancePx = 8.0f;
 
+        // --- Dash pickup ---
+        {
+            auto pickup = m_scene->CreateEntity("DashPickup");
+            pickup.Get<my2d::TransformComponent>().position = { 200.0f, -220.0f };
+
+            auto& spr = pickup.Add<my2d::SpriteRendererComponent>();
+            spr.texturePath = "test.png";
+            spr.size = { 32.0f, 32.0f };
+            spr.layer = 1;
+
+            auto& pf = pickup.Add<my2d::PersistentFlagComponent>();
+            pf.flag = "pickup_dash";
+
+            auto& gp = pickup.Add<my2d::GrantProgressionComponent>();
+            gp.setFlag = "pickup_dash";
+            gp.unlockAbility = true;
+            gp.ability = my2d::AbilityId::Dash;
+            gp.radiusPx = 32.0f;
+        }
+
+        // --- Gate that OPENS when Dash is unlocked (does not get destroyed) ---
+        {
+            auto gate = m_scene->CreateEntity("DashGate");
+            gate.Get<my2d::TransformComponent>().position = { 340.0f, -232.0f };
+
+            auto& spr = gate.Add<my2d::SpriteRendererComponent>();
+            spr.texturePath = "test.png";
+            spr.size = { 32.0f, 96.0f };
+            spr.layer = 1;
+
+            auto& g = gate.Add<my2d::GateComponent>();
+            g.requireAllAbilities = { my2d::AbilityId::Dash };
+            g.openWhenSatisfied = true;
+            g.openBehavior = my2d::GateOpenBehavior::DisableCollider;
+            g.overrideTint = true;
+            g.closedTint = SDL_Color{ 255, 120, 120, 255 };
+            g.openTint = SDL_Color{ 120, 255, 120, 200 };
+            g.hideWhenOpen = false;
+
+            // Physics body for the gate (closed = solid, open = disabled)
+            auto& grb = gate.Add<my2d::RigidBody2DComponent>();
+            grb.type = my2d::BodyType2D::Static;
+
+            auto& gbc = gate.Add<my2d::BoxCollider2DComponent>();
+            gbc.size = spr.size;
+            gbc.density = 0.0f;
+            gbc.friction = 0.0f;
+
+            // Gate is environment, collides with player
+            gbc.categoryBits = my2d::PhysicsLayers::Environment;
+            gbc.maskBits = my2d::PhysicsLayers::Player;
+        }
+
+        my2d::Progression_ApplyPersistence(engine, *m_scene);
+        my2d::GateSystem_Update(engine, *m_scene);
         my2d::Physics_CreateRuntime(*m_scene, engine.GetPhysics(), engine.PixelsPerMeter());
 
-        // Center camera at world origin
         engine.GetRenderer2D().GetCamera().SetPosition({ 0.0f, 0.0f });
         engine.GetRenderer2D().GetCamera().SetZoom(1.0f);
-
-        return true;
-    }
-
-    void OnUpdate(my2d::Engine& engine, double dt) override
-    {
-        (void)dt;
-        my2d::Physics_SyncTransforms(*m_scene, engine.PixelsPerMeter());
-        my2d::Progression_Update(engine, *m_scene, m_player);
-
-        if (engine.GetInput().WasKeyPressed(SDL_SCANCODE_ESCAPE))
-            engine.RequestQuit();
-
-        // Camera follows player
-        auto& cam = engine.GetRenderer2D().GetCamera();
-        cam.SetPosition(m_player.Get<my2d::TransformComponent>().position);
-    }
-
-    void OnFixedUpdate(my2d::Engine& engine, double fixedDt) override
-    {
-        my2d::PlatformerController_FixedUpdate(engine, *m_scene, (float)fixedDt);
-    }
-
-
-    void OnRender(my2d::Engine& engine) override
-    {
-        if (engine.DrawPhysicsDebug())
-        {
-            engine.GetPhysicsDebugDraw().Draw(
-                engine.GetSDLRenderer(),
-                engine.GetPhysics().WorldId(),
-                engine.PixelsPerMeter(),
-                engine.GetRenderer2D().GetCamera()
-            );
-        }
-        m_scene->OnRender(engine);
     }
 
 private:
     std::unique_ptr<my2d::Scene> m_scene;
     my2d::Entity m_player;
+    std::string m_savePath = "savegame.json";
 };
 
 int main()
@@ -170,7 +251,7 @@ int main()
     my2d::Engine engine;
     my2d::EngineConfig cfg;
     cfg.windowTitle = "My2DEngine - Scene Test";
-    cfg.contentRoot = "Game/Content"; // <- uses AssetManager root
+    cfg.contentRoot = "Game/Content";
 
     MyGame game;
     return engine.Run(cfg, game);

@@ -80,7 +80,8 @@ namespace my2d
         m_pixelsPerMeter = config.pixelsPerMeter;
         m_drawPhysicsDebug = config.drawPhysicsDebug;
 
-        m_physics.Initialize(b2Vec2(config.gravityX, config.gravityY));
+        m_gravity = b2Vec2(config.gravityX, config.gravityY);
+        m_physics.Initialize(m_gravity);
 
         m_time.Reset(SDL_GetPerformanceCounter());
         m_fixedAccumulator = 0.0;
@@ -181,6 +182,12 @@ namespace my2d
     void Engine::RequestQuit()
     {
         m_quitRequested = true;
+    }
+
+    void Engine::ResetPhysicsWorld()
+    {
+        m_physics.Shutdown();
+        m_physics.Initialize(m_gravity);
     }
 
     // Accessors

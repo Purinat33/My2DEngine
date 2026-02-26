@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "Gameplay/ProgressionSystem.h"
 #include "Scene/Components.h"
-
+#include "Physics/PhysicsSystem.h"
+#include "Gameplay/GateSystem.h"
+#include <vector>
 #include <glm/geometric.hpp> // distance
 
 namespace my2d
@@ -11,14 +13,24 @@ namespace my2d
         auto& ws = engine.GetWorldState();
         auto& reg = scene.Registry();
 
-        auto view = reg.view<PersistentFlagComponent>();
-        for (auto e : view)
+        std::vector<entt::entity> toDestroy;
+
+        // 1) Persistent entities removed if a flag exists
         {
-            auto& pf = view.get<PersistentFlagComponent>(e);
-            if (!pf.flag.empty() && ws.HasFlag(pf.flag))
+            auto view = reg.view<PersistentFlagComponent>();
+            for (auto e : view)
             {
-                reg.destroy(e);
+                auto& pf = view.get<PersistentFlagComponent>(e);
+                if (!pf.flag.empty() && ws.HasFlag(pf.flag))
+                    toDestroy.push_back(e);
             }
+        }
+
+        for (auto e : toDestroy)
+        {
+            Physics_DestroyRuntimeForEntity(scene, e);
+            if (reg.valid(e))
+                reg.destroy(e);
         }
     }
 
@@ -31,6 +43,8 @@ namespace my2d
 
         auto& playerT = reg.get<TransformComponent>(player.Handle());
 
+        bool grantedSomething = false;
+
         auto view = reg.view<TransformComponent, GrantProgressionComponent>();
         for (auto e : view)
         {
@@ -41,16 +55,21 @@ namespace my2d
             if (dist > g.radiusPx)
                 continue;
 
-            // grant
             if (!g.setFlag.empty())
                 engine.GetWorldState().SetFlag(g.setFlag);
 
             if (g.unlockAbility)
                 engine.GetWorldState().UnlockAbility(g.ability);
 
-            // remove pickup
             reg.destroy(e);
-            break; // avoid iterator invalidation issues + multiple pickups in one tick
+            grantedSomething = true;
+            break;
+        }
+
+        if (grantedSomething)
+        {
+            Progression_ApplyPersistence(engine, scene);
+            GateSystem_Update(engine, scene);
         }
     }
 }
