@@ -47,6 +47,7 @@ namespace my2d
 
         WorldState& GetWorldState() { return m_worldState; }
         const WorldState& GetWorldState() const { return m_worldState; }
+        const std::string& ContentRoot() const { return m_contentRoot; }
 
     private:
         // Concrete members
@@ -60,6 +61,7 @@ namespace my2d
         float m_pixelsPerMeter = 100.0f;
         bool m_drawPhysicsDebug = true;
         b2Vec2 m_gravity{ 0.0f, 9.8f };
+        std::string m_contentRoot;
 
         WorldState m_worldState;
 

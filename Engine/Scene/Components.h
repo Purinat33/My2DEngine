@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <cstdint>
 
 #include <glm/vec2.hpp>
 #include "Platform/Sdl.h"
@@ -15,6 +16,12 @@ class b2Body;
 
 namespace my2d
 {
+
+    struct IdComponent
+    {
+        uint64_t id = 0;
+    };
+
     struct TagComponent
     {
         std::string tag;
@@ -38,6 +45,33 @@ namespace my2d
         SDL_Rect sourceRect{ 0, 0, 0, 0 };
 
         SDL_RendererFlip flip = SDL_FLIP_NONE;
+    };
+
+    struct PlayerSpawnComponent
+    {
+        std::string name = "start";
+    };
+
+    struct DoorComponent
+    {
+        // Relative to content root, e.g. "Scenes/room_a.scene.json"
+        std::string targetScene;
+
+        // Spawn name in the target room, e.g. "from_left"
+        std::string targetSpawn = "start";
+
+        // Trigger rectangle size in pixels (top-left at Transform.position)
+        glm::vec2 triggerSize{ 32.0f, 64.0f };
+
+        // If true, player must press interact to transition.
+        bool requireInteract = true;
+        SDL_Scancode interactKey = SDL_SCANCODE_W;
+
+        // If true, walking into trigger transitions immediately.
+        bool autoTrigger = false;
+
+        // runtime
+        float cooldownTimer = 0.0f;
     };
 
     struct Tileset

@@ -8,18 +8,60 @@
 
 #include <algorithm>
 #include <vector>
+#include <random>
 
 namespace my2d
 {
+    static uint32_t s_salt = []()
+        {
+            std::random_device rd;
+            return (uint32_t)rd();
+        }();
+
+    static uint32_t s_counter = 1;
+
+    static uint64_t GenerateId()
+    {
+        // Upper 32 bits = run salt, lower 32 bits = incrementing counter
+        return (uint64_t(s_salt) << 32) | uint64_t(s_counter++);
+    }
+
+    static void TrackLoadedId(uint64_t id)
+    {
+        const uint32_t hi = uint32_t(id >> 32);
+        const uint32_t lo = uint32_t(id & 0xFFFFFFFFu);
+        if (hi == s_salt)
+            s_counter = std::max(s_counter, lo + 1);
+    }
+
     Entity Scene::CreateEntity(const std::string& name)
     {
+        return CreateEntityWithId(GenerateId(), name);
+    }
+
+    Entity Scene::CreateEntityWithId(uint64_t id, const std::string& name)
+    {
+        TrackLoadedId(id);
+
         entt::entity e = m_registry.create();
         Entity entity(e, this);
 
+        entity.Add<IdComponent>(IdComponent{ id });
         entity.Add<TransformComponent>();
         entity.Add<TagComponent>(TagComponent{ name });
 
         return entity;
+    }
+
+    Entity Scene::FindEntityById(uint64_t id)
+    {
+        auto view = m_registry.view<IdComponent>();
+        for (auto e : view)
+        {
+            if (view.get<IdComponent>(e).id == id)
+                return Entity(e, this);
+        }
+        return {};
     }
 
     void Scene::DestroyEntity(Entity e)

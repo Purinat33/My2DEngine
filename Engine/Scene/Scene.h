@@ -13,6 +13,8 @@ namespace my2d
     {
     public:
         Entity CreateEntity(const std::string& name = "Entity");
+        Entity CreateEntityWithId(uint64_t id, const std::string& name = "Entity");
+        Entity FindEntityById(uint64_t id);
         void DestroyEntity(Entity e);
 
         void OnUpdate(Engine& engine, double dt);

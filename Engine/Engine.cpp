@@ -73,6 +73,7 @@ namespace my2d
         // Hook runtime systems to the created SDL_Renderer
         m_assets.SetRenderer(m_window.GetSDLRenderer());
         m_assets.SetContentRoot(config.contentRoot);
+        m_contentRoot = config.contentRoot;
 
         m_renderer2d.SetRenderer(m_window.GetSDLRenderer());
         m_renderer2d.SetViewport(m_window.Width(), m_window.Height());

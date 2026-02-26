@@ -152,6 +152,7 @@
     <ClInclude Include="Gameplay\Ability.h" />
     <ClInclude Include="Gameplay\GateSystem.h" />
     <ClInclude Include="Gameplay\ProgressionSystem.h" />
+    <ClInclude Include="Gameplay\RoomManager.h" />
     <ClInclude Include="Gameplay\SaveGame.h" />
     <ClInclude Include="Gameplay\WorldState.h" />
     <ClInclude Include="pch.h" />
@@ -173,12 +174,14 @@
     <ClInclude Include="Scene\Components.h" />
     <ClInclude Include="Scene\Entity.h" />
     <ClInclude Include="Scene\Scene.h" />
+    <ClInclude Include="Scene\SceneSerializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Gameplay\GateSystem.cpp" />
     <ClCompile Include="Gameplay\ProgressionSystem.cpp" />
+    <ClCompile Include="Gameplay\RoomManager.cpp" />
     <ClCompile Include="Gameplay\SaveGame.cpp" />
     <ClCompile Include="Gameplay\WorldState.cpp" />
     <ClCompile Include="pch.cpp">
@@ -192,6 +195,7 @@
     <ClCompile Include="Renderer\Texture2D.cpp" />
     <ClCompile Include="Renderer\TilemapRenderer2D.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
+    <ClCompile Include="Scene\SceneSerializer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
