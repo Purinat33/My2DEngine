@@ -13,6 +13,8 @@
 #include "Physics/PhysicsWorld.h"
 #include "Physics/PhysicsDebugDraw.h"
 
+#include "Gameplay/WorldState.h"
+
 namespace my2d
 {
     class App;
@@ -42,6 +44,9 @@ namespace my2d
         bool DrawPhysicsDebug() const { return m_drawPhysicsDebug; }
         const Time& GetTime() const;
 
+        WorldState& GetWorldState() { return m_worldState; }
+        const WorldState& GetWorldState() const { return m_worldState; }
+
     private:
         // Concrete members
         Platform::Window m_window; // (defined in Platform/Window.h)
@@ -53,6 +58,8 @@ namespace my2d
         PhysicsDebugDraw m_physicsDebug;
         float m_pixelsPerMeter = 100.0f;
         bool m_drawPhysicsDebug = true;
+
+        WorldState m_worldState;
 
         double m_fixedAccumulator = 0.0;
         bool m_initialized = false;

@@ -9,6 +9,8 @@
 
 #include "Physics/PhysicsLayers.h"
 
+#include "Gameplay/Ability.h"
+
 class b2Body;
 
 namespace my2d
@@ -163,4 +165,24 @@ namespace my2d
         float coyoteTimer = 0.0f;
         float jumpBufferTimer = 0.0f;
     };
+
+    struct PersistentFlagComponent
+    {
+        // If this flag is already set in WorldState, entity is removed on scene start
+        std::string flag;
+    };
+
+    struct GrantProgressionComponent
+    {
+        // On touch: set this flag (optional)
+        std::string setFlag;
+
+        // On touch: unlock ability (optional)
+        bool unlockAbility = false;
+        AbilityId ability = AbilityId::Dash;
+
+        // simple distance check (pixels)
+        float radiusPx = 24.0f;
+    };
+
 }

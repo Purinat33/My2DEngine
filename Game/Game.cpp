@@ -4,6 +4,7 @@
 #include "Physics/TilemapColliderBuilder.h"
 #include "Physics/PhysicsSystem.h"
 #include "Physics/PlatformerControllerSystem.h"
+#include "Gameplay/ProgressionSystem.h"
 
 class MyGame : public my2d::App
 {
@@ -67,6 +68,26 @@ public:
         s.size = { 64.0f, 64.0f };
         s.layer = 0;
 
+        auto pickup = m_scene->CreateEntity("DashPickup");
+        pickup.Get<my2d::TransformComponent>().position = { 200.0f, -220.0f };
+
+        auto& spr = pickup.Add<my2d::SpriteRendererComponent>();
+        spr.texturePath = "test.png";
+        spr.size = { 32.0f, 32.0f };
+        spr.layer = 1;
+
+        auto& pf = pickup.Add<my2d::PersistentFlagComponent>();
+        pf.flag = "pickup_dash";
+
+        auto& gp = pickup.Add<my2d::GrantProgressionComponent>();
+        gp.setFlag = "pickup_dash";
+        gp.unlockAbility = true;
+        gp.ability = my2d::AbilityId::Dash;
+        gp.radiusPx = 32.0f;
+
+        // After you build the scene:
+        my2d::Progression_ApplyPersistence(engine, *m_scene);
+
         // Physics
         auto& rb = m_player.Add<my2d::RigidBody2DComponent>();
         rb.enableSleep = false;
@@ -109,6 +130,7 @@ public:
     {
         (void)dt;
         my2d::Physics_SyncTransforms(*m_scene, engine.PixelsPerMeter());
+        my2d::Progression_Update(engine, *m_scene, m_player);
 
         if (engine.GetInput().WasKeyPressed(SDL_SCANCODE_ESCAPE))
             engine.RequestQuit();

@@ -149,6 +149,10 @@
     <ClInclude Include="Core\Input.h" />
     <ClInclude Include="Core\Time.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Gameplay\Ability.h" />
+    <ClInclude Include="Gameplay\ProgressionSystem.h" />
+    <ClInclude Include="Gameplay\SaveGame.h" />
+    <ClInclude Include="Gameplay\WorldState.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Physics\Box2D.h" />
     <ClInclude Include="Physics\PhysicsDebugDraw.h" />
@@ -172,6 +176,9 @@
   <ItemGroup>
     <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="Gameplay\ProgressionSystem.cpp" />
+    <ClCompile Include="Gameplay\SaveGame.cpp" />
+    <ClCompile Include="Gameplay\WorldState.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
