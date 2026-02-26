@@ -13,5 +13,7 @@ namespace my2d
 
         // Used by the engine loop for fixed updates (physics).
         double fixedDeltaSeconds = 1.0 / 60.0;
+
+        std::string contentRoot = ""; // e.g. "$(SolutionDir)Game/Content" or "Game/Content"
     };
 }

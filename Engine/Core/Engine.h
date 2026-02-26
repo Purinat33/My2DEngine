@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Platform/Sdl.h"
+#include "Assets/AssetManager.h"
+#include "Renderer/Renderer2D.h"
 
 #include "Core/EngineConfig.h"
 #include "Core/Input.h"
@@ -29,6 +31,8 @@ namespace my2d
         SDL_Renderer* GetSDLRenderer() const;
 
         Input& GetInput();
+        AssetManager& GetAssets() { return m_assets; }
+        Renderer2D& GetRenderer2D() { return m_renderer2d; }
         const Time& GetTime() const;
 
     private:
@@ -36,6 +40,8 @@ namespace my2d
         Platform::Window m_window; // (defined in Platform/Window.h)
         Input m_input;
         Time m_time;
+        AssetManager m_assets;
+        Renderer2D m_renderer2d;
 
         double m_fixedAccumulator = 0.0;
         bool m_initialized = false;

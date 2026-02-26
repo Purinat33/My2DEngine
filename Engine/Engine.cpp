@@ -5,21 +5,8 @@
 
 #include <algorithm>
 #include <spdlog/spdlog.h>
-#if __has_include(<SDL2/SDL_image.h>)
-#include <SDL2/SDL_image.h>
-#elif __has_include(<SDL_image.h>)
-#include <SDL_image.h>
-#else
-#error "SDL_image headers not found."
-#endif
-
-#if __has_include(<SDL2/SDL_ttf.h>)
-#include <SDL2/SDL_ttf.h>
-#elif __has_include(<SDL_ttf.h>)
-#include <SDL_ttf.h>
-#else
-#error "SDL_ttf headers not found."
-#endif
+#include "Platform/SdlImage.h"
+#include "Platform/SdlTtf.h"
 
 namespace my2d
 {
@@ -82,6 +69,13 @@ namespace my2d
 
         if (!m_window.Create(config))
             return false;
+
+        // Hook runtime systems to the created SDL_Renderer
+        m_assets.SetRenderer(m_window.GetSDLRenderer());
+        m_assets.SetContentRoot(config.contentRoot);
+
+        m_renderer2d.SetRenderer(m_window.GetSDLRenderer());
+        m_renderer2d.SetViewport(m_window.Width(), m_window.Height());
 
         m_time.Reset(SDL_GetPerformanceCounter());
         m_fixedAccumulator = 0.0;
@@ -150,6 +144,9 @@ namespace my2d
                     m_window.OnEvent(e);
                 }
             }
+
+            // Update viewport in case the window resized
+            m_renderer2d.SetViewport(m_window.Width(), m_window.Height());
 
             // Fixed update (physics)
             m_fixedAccumulator += dt;

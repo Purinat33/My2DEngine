@@ -29,6 +29,9 @@ namespace my2d::Platform
                 return false;
             }
 
+            m_width = config.windowWidth;
+            m_height = config.windowHeight;
+
             uint32_t rendererFlags = SDL_RENDERER_ACCELERATED;
             if (config.vsync) rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
 

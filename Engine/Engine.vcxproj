@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Assets\AssetManager.h" />
     <ClInclude Include="Core\App.h" />
     <ClInclude Include="Core\Engine.h" />
     <ClInclude Include="Core\EngineConfig.h" />
@@ -150,13 +151,25 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Platform\Sdl.h" />
+    <ClInclude Include="Platform\SdlImage.h" />
+    <ClInclude Include="Platform\SdlTtf.h" />
     <ClInclude Include="Platform\Window.h" />
+    <ClInclude Include="Renderer\Camera2D.h" />
+    <ClInclude Include="Renderer\Renderer2D.h" />
+    <ClInclude Include="Renderer\Texture2D.h" />
+    <ClInclude Include="Scene\Components.h" />
+    <ClInclude Include="Scene\Entity.h" />
+    <ClInclude Include="Scene\Scene.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Renderer\Renderer2D.cpp" />
+    <ClCompile Include="Renderer\Texture2D.cpp" />
+    <ClCompile Include="Scene\Scene.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
