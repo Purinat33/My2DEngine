@@ -10,6 +10,16 @@
 
 namespace my2d
 {
+
+    struct GroundInfo
+    {
+        bool grounded = false;
+        bool jumpable = false;
+        b2Vec2 normal = b2Vec2{ 0, -1 };
+        float slopeDeg = 0.0f;
+    };
+
+
     static float MoveTowards(float current, float target, float maxDelta)
     {
         if (current < target)
@@ -19,23 +29,25 @@ namespace my2d
         return target;
     }
 
-    static bool GroundCheck(Engine& engine, const RigidBody2DComponent& rb, const BoxCollider2DComponent& bc, const PlatformerControllerComponent& pc)
+    static GroundInfo GroundCheck(Engine& engine, const RigidBody2DComponent& rb, const BoxCollider2DComponent& bc, const PlatformerControllerComponent& pc)
     {
-        if (!b2Body_IsValid(rb.bodyId)) return false;
+        GroundInfo best{};
+        bool found = false;
+
+        if (!b2Body_IsValid(rb.bodyId))
+            return best;
 
         const float ppm = engine.PixelsPerMeter();
         const b2WorldId worldId = engine.GetPhysics().WorldId();
 
-        // body center in meters
         const b2Vec2 center = b2Body_GetPosition(rb.bodyId);
 
         const float halfW = (bc.size.x * 0.5f) / ppm;
         const float halfH = (bc.size.y * 0.5f) / ppm;
 
-        const float inset = (pc.groundRayInsetPx) / ppm;
-        const float rayLen = (pc.groundCheckDistancePx) / ppm;
+        const float inset = pc.groundRayInsetPx / ppm;
+        const float rayLen = pc.groundCheckDistancePx / ppm;
 
-        // two rays: left & right foot (slightly inset)
         const b2Vec2 o1 = b2Vec2{ center.x - std::max(0.0f, halfW - inset), center.y + halfH - 0.001f };
         const b2Vec2 o2 = b2Vec2{ center.x + std::max(0.0f, halfW - inset), center.y + halfH - 0.001f };
 
@@ -43,17 +55,36 @@ namespace my2d
         qf.categoryBits = PhysicsLayers::Player;
         qf.maskBits = PhysicsLayers::Environment;
 
-        auto hitOk = [&](b2Vec2 origin)
+        auto consider = [&](b2Vec2 origin)
             {
                 b2RayResult res = b2World_CastRayClosest(worldId, origin, b2Vec2{ 0.0f, rayLen }, qf);
-                if (!res.hit) return false;
+                if (!res.hit) return;
 
-                // With y+ down, ground normal should point UP => normal.y negative
-                return res.normal.y < -0.2f;
+                // Need an upward-ish normal (y+ is down, so "up" is negative y)
+                if (res.normal.y >= -0.2f) return;
+
+                const float cosUp = std::clamp(-res.normal.y, 0.0f, 1.0f);
+                const float slopeDeg = std::acos(cosUp) * 57.2957795f;
+
+                GroundInfo gi;
+                gi.normal = res.normal;
+                gi.slopeDeg = slopeDeg;
+                gi.grounded = (slopeDeg <= pc.maxGroundSlopeDeg);
+                gi.jumpable = (slopeDeg <= pc.maxJumpSlopeDeg);
+
+                if (!found || gi.slopeDeg < best.slopeDeg)
+                {
+                    best = gi;
+                    found = true;
+                }
             };
 
-        return hitOk(o1) || hitOk(o2);
+        consider(o1);
+        consider(o2);
+
+        return best;
     }
+
 
     void PlatformerController_FixedUpdate(Engine& engine, Scene& scene, float fixedDt)
     {
@@ -74,10 +105,11 @@ namespace my2d
                 continue;
 
             // --- Grounding + timers ---
-            const bool grounded = GroundCheck(engine, rb, bc, pc);
-            pc.grounded = grounded;
+            GroundInfo gi = GroundCheck(engine, rb, bc, pc);
+            pc.grounded = gi.grounded;
+            pc.jumpableGround = gi.jumpable;
 
-            if (grounded)
+            if (pc.jumpableGround)
                 pc.coyoteTimer = pc.coyoteTime;
             else
                 pc.coyoteTimer = std::max(0.0f, pc.coyoteTimer - fixedDt);

@@ -19,6 +19,10 @@ public:
 
         auto& tm = tmEnt.Add<my2d::TilemapComponent>();
         auto& tmc = tmEnt.Add<my2d::TilemapColliderComponent>();
+        // Example slope tile indices (change these to match your tileset)
+        tmc.slopeUpRightTiles = { 2 };
+        tmc.slopeUpLeftTiles = { 3 };
+        tmc.slopeFriction = 0.02f;
         tmc.collisionLayerIndex = 0; // whichever layer is your solid tiles
         tmc.friction = 0.9f;
         tm.width = 50;

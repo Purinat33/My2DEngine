@@ -7,6 +7,8 @@
 #include "Platform/Sdl.h"
 #include "Physics/Box2D.h"
 
+#include "Physics/PhysicsLayers.h"
+
 class b2Body;
 
 namespace my2d
@@ -83,6 +85,13 @@ namespace my2d
         float restitution = 0.0f;
         bool isSensor = false;
 
+        // Slopes: list tile indices (atlas indices) that represent slope tiles
+        std::vector<int> slopeUpRightTiles; // "/" (low on left, high on right)
+        std::vector<int> slopeUpLeftTiles;  // "\" (high on left, low on right)
+
+        // usually very low so you slide down
+        float slopeFriction = 0.05f;
+
         // runtime (Box2D 3.x uses ids/handles)
         std::vector<b2BodyId> runtimeBodies;
     };
@@ -144,6 +153,10 @@ namespace my2d
         SDL_Scancode left = SDL_SCANCODE_A;
         SDL_Scancode right = SDL_SCANCODE_D;
         SDL_Scancode jump = SDL_SCANCODE_SPACE;
+
+        float maxGroundSlopeDeg = 55.0f; // consider grounded up to this
+        float maxJumpSlopeDeg = 5.0f;    // only allow jump on very flat ground
+        bool jumpableGround = false;     // runtime
 
         // runtime
         bool grounded = false;
