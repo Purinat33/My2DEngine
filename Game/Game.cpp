@@ -2,6 +2,8 @@
 #include "Scene/Scene.h"
 #include <spdlog/spdlog.h>
 #include "Physics/TilemapColliderBuilder.h"
+#include "Physics/PhysicsSystem.h"
+
 
 class MyGame : public my2d::App
 {
@@ -50,15 +52,30 @@ public:
         tm.layers.push_back(std::move(base));
 
         my2d::BuildTilemapColliders(engine.GetPhysics(), *m_scene, engine.PixelsPerMeter());
+        
 
-        auto e = m_scene->CreateEntity("TestSprite");
-        auto& t = e.Get<my2d::TransformComponent>();
-        t.position = { 0.0f, 0.0f };
+        m_player = m_scene->CreateEntity("Player");
+        auto& t = m_player.Get<my2d::TransformComponent>();
+        t.position = { 0.0f, -200.0f }; // start above the ground so you can see it fall
 
-        auto& s = e.Add<my2d::SpriteRendererComponent>();
+        auto& s = m_player.Add<my2d::SpriteRendererComponent>();
         s.texturePath = "test.png";
-        s.size = { 128.0f, 128.0f };
+        s.size = { 64.0f, 64.0f };
         s.layer = 0;
+
+        // Physics
+        auto& rb = m_player.Add<my2d::RigidBody2DComponent>();
+        rb.enableSleep = false;
+        rb.type = my2d::BodyType2D::Dynamic;
+        rb.fixedRotation = true;
+        rb.gravityScale = 1.0f;
+
+        auto& box = m_player.Add<my2d::BoxCollider2DComponent>();
+        box.size = s.size;
+        box.density = 1.0f;
+        box.friction = 0.0f; // player shouldn't "stick" on walls
+
+        my2d::Physics_CreateRuntime(*m_scene, engine.GetPhysics(), engine.PixelsPerMeter());
 
         // Center camera at world origin
         engine.GetRenderer2D().GetCamera().SetPosition({ 0.0f, 0.0f });
@@ -70,21 +87,38 @@ public:
     void OnUpdate(my2d::Engine& engine, double dt) override
     {
         (void)dt;
+        my2d::Physics_SyncTransforms(*m_scene, engine.PixelsPerMeter());
 
         if (engine.GetInput().WasKeyPressed(SDL_SCANCODE_ESCAPE))
             engine.RequestQuit();
 
-        // WASD moves camera
+        // Camera follows player
         auto& cam = engine.GetRenderer2D().GetCamera();
-        glm::vec2 p = cam.Position();
+        cam.SetPosition(m_player.Get<my2d::TransformComponent>().position);
+    }
 
-        const float speed = 400.0f; // pixels/sec
-        if (engine.GetInput().IsKeyDown(SDL_SCANCODE_A)) p.x -= speed * (float)dt;
-        if (engine.GetInput().IsKeyDown(SDL_SCANCODE_D)) p.x += speed * (float)dt;
-        if (engine.GetInput().IsKeyDown(SDL_SCANCODE_W)) p.y -= speed * (float)dt;
-        if (engine.GetInput().IsKeyDown(SDL_SCANCODE_S)) p.y += speed * (float)dt;
+    void OnFixedUpdate(my2d::Engine& engine, double) override
+    {
+        my2d::Physics_CreateRuntime(*m_scene, engine.GetPhysics(), engine.PixelsPerMeter());
+        if (!m_player) return;
 
-        cam.SetPosition(p);
+        auto& rb = m_player.Get<my2d::RigidBody2DComponent>();
+        static bool once = false;
+        if (!once) { once = true; spdlog::info("Player body valid? {}", b2Body_IsValid(rb.bodyId)); }
+        if (!b2Body_IsValid(rb.bodyId)) return;
+
+
+        b2Vec2 v = b2Body_GetLinearVelocity(rb.bodyId);
+
+        const float speedPx = 300.0f;                 // pixels/sec
+        const float speed = speedPx / engine.PixelsPerMeter(); // meters/sec
+
+        float desiredX = 0.0f;
+        if (engine.GetInput().IsKeyDown(SDL_SCANCODE_A)) desiredX -= speed;
+        if (engine.GetInput().IsKeyDown(SDL_SCANCODE_D)) desiredX += speed;
+
+        v.x = desiredX;
+        b2Body_SetLinearVelocity(rb.bodyId, v);
     }
 
     void OnRender(my2d::Engine& engine) override
@@ -103,6 +137,7 @@ public:
 
 private:
     std::unique_ptr<my2d::Scene> m_scene;
+    my2d::Entity m_player;
 };
 
 int main()

@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include <glm/vec2.hpp>
 #include "Platform/Sdl.h"
@@ -84,5 +85,44 @@ namespace my2d
 
         // runtime (Box2D 3.x uses ids/handles)
         std::vector<b2BodyId> runtimeBodies;
+    };
+
+
+    enum class BodyType2D
+    {
+        Static = 0,
+        Kinematic,
+        Dynamic
+    };
+
+    struct RigidBody2DComponent
+    {
+        BodyType2D type = BodyType2D::Dynamic;
+
+        bool fixedRotation = true;
+        bool enableSleep = true;
+        bool isBullet = false;
+
+        float gravityScale = 1.0f;
+        float linearDamping = 0.0f;
+        float angularDamping = 0.0f;
+
+        // runtime
+        b2BodyId bodyId = b2_nullBodyId;
+    };
+
+    struct BoxCollider2DComponent
+    {
+        // PIXELS
+        glm::vec2 size{ 32.0f, 32.0f };
+        glm::vec2 offset{ 0.0f, 0.0f };
+
+        float density = 1.0f;
+        float friction = 0.2f;
+        float restitution = 0.0f;
+        bool isSensor = false;
+
+        // runtime
+        b2ShapeId shapeId = b2_nullShapeId;
     };
 }
