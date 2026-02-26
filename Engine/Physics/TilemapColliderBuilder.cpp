@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Physics/TilemapColliderBuilder.h"
 #include "Scene/Components.h"
+#include "Physics/PhysicsLayers.h"
 
 #include <vector>
 #include <algorithm>
@@ -120,6 +121,8 @@ namespace my2d
                 b2BodyId bodyId = b2CreateBody(physics.WorldId(), &bd);
 
                 b2ShapeDef sd = b2DefaultShapeDef();
+                sd.filter.categoryBits = my2d::PhysicsLayers::Environment;
+                sd.filter.maskBits = my2d::PhysicsLayers::All;
                 sd.density = 0.0f;
                 sd.material.friction = col.friction;
                 sd.material.restitution = col.restitution;

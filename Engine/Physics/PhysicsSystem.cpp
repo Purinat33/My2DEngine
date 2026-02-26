@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Physics/PhysicsSystem.h"
 #include "Scene/Components.h"
+#include "Physics/PhysicsLayers.h"
 
 #include <algorithm>
 
@@ -60,6 +61,8 @@ namespace my2d
             sd.material.friction = bc.friction;
             sd.material.restitution = bc.restitution;
             sd.isSensor = bc.isSensor;
+            sd.filter.categoryBits = my2d::PhysicsLayers::Player;
+            sd.filter.maskBits = my2d::PhysicsLayers::Environment;
 
             const float halfW = (bc.size.x * 0.5f) / ppm;
             const float halfH = (bc.size.y * 0.5f) / ppm;

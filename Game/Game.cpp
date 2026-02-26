@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 #include "Physics/TilemapColliderBuilder.h"
 #include "Physics/PhysicsSystem.h"
-
+#include "Physics/PlatformerControllerSystem.h"
 
 class MyGame : public my2d::App
 {
@@ -75,6 +75,13 @@ public:
         box.density = 1.0f;
         box.friction = 0.0f; // player shouldn't "stick" on walls
 
+        auto& pc = m_player.Add<my2d::PlatformerControllerComponent>();
+        pc.moveSpeedPx = 320.0f;
+        pc.jumpSpeedPx = 720.0f;
+        pc.coyoteTime = 0.10f;
+        pc.jumpBufferTime = 0.12f;
+        pc.groundCheckDistancePx = 8.0f;
+
         my2d::Physics_CreateRuntime(*m_scene, engine.GetPhysics(), engine.PixelsPerMeter());
 
         // Center camera at world origin
@@ -97,29 +104,11 @@ public:
         cam.SetPosition(m_player.Get<my2d::TransformComponent>().position);
     }
 
-    void OnFixedUpdate(my2d::Engine& engine, double) override
+    void OnFixedUpdate(my2d::Engine& engine, double fixedDt) override
     {
-        my2d::Physics_CreateRuntime(*m_scene, engine.GetPhysics(), engine.PixelsPerMeter());
-        if (!m_player) return;
-
-        auto& rb = m_player.Get<my2d::RigidBody2DComponent>();
-        static bool once = false;
-        if (!once) { once = true; spdlog::info("Player body valid? {}", b2Body_IsValid(rb.bodyId)); }
-        if (!b2Body_IsValid(rb.bodyId)) return;
-
-
-        b2Vec2 v = b2Body_GetLinearVelocity(rb.bodyId);
-
-        const float speedPx = 300.0f;                 // pixels/sec
-        const float speed = speedPx / engine.PixelsPerMeter(); // meters/sec
-
-        float desiredX = 0.0f;
-        if (engine.GetInput().IsKeyDown(SDL_SCANCODE_A)) desiredX -= speed;
-        if (engine.GetInput().IsKeyDown(SDL_SCANCODE_D)) desiredX += speed;
-
-        v.x = desiredX;
-        b2Body_SetLinearVelocity(rb.bodyId, v);
+        my2d::PlatformerController_FixedUpdate(engine, *m_scene, (float)fixedDt);
     }
+
 
     void OnRender(my2d::Engine& engine) override
     {

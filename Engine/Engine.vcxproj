@@ -152,8 +152,10 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Physics\Box2D.h" />
     <ClInclude Include="Physics\PhysicsDebugDraw.h" />
+    <ClInclude Include="Physics\PhysicsLayers.h" />
     <ClInclude Include="Physics\PhysicsSystem.h" />
     <ClInclude Include="Physics\PhysicsWorld.h" />
+    <ClInclude Include="Physics\PlatformerControllerSystem.h" />
     <ClInclude Include="Physics\TilemapColliderBuilder.h" />
     <ClInclude Include="Platform\Sdl.h" />
     <ClInclude Include="Platform\SdlImage.h" />
@@ -175,6 +177,7 @@
     </ClCompile>
     <ClCompile Include="Physics\PhysicsDebugDraw.cpp" />
     <ClCompile Include="Physics\PhysicsSystem.cpp" />
+    <ClCompile Include="Physics\PlatformerControllerSystem.cpp" />
     <ClCompile Include="Physics\TilemapColliderBuilder.cpp" />
     <ClCompile Include="Renderer\Renderer2D.cpp" />
     <ClCompile Include="Renderer\Texture2D.cpp" />

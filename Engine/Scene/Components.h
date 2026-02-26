@@ -125,4 +125,29 @@ namespace my2d
         // runtime
         b2ShapeId shapeId = b2_nullShapeId;
     };
+
+    struct PlatformerControllerComponent
+    {
+        // movement (PIXELS/sec and PIXELS/sec^2)
+        float moveSpeedPx = 300.0f;
+        float accelPx = 2500.0f;
+        float decelPx = 3000.0f;
+
+        // jump
+        float jumpSpeedPx = 650.0f;        // initial jump velocity (px/s)
+        float coyoteTime = 0.10f;          // seconds after leaving ground you can still jump
+        float jumpBufferTime = 0.12f;      // seconds before landing to buffer jump
+        float groundCheckDistancePx = 6.0f;
+        float groundRayInsetPx = 6.0f;     // inset from edges for left/right rays
+
+        // keys
+        SDL_Scancode left = SDL_SCANCODE_A;
+        SDL_Scancode right = SDL_SCANCODE_D;
+        SDL_Scancode jump = SDL_SCANCODE_SPACE;
+
+        // runtime
+        bool grounded = false;
+        float coyoteTimer = 0.0f;
+        float jumpBufferTimer = 0.0f;
+    };
 }
