@@ -17,6 +17,8 @@
 #include "Gameplay/CombatSystem.h"
 #include "Physics/PhysicsSystem.h"
 
+#include "Gameplay/EnemyAISystem.h"
+
 class MyGame : public my2d::App
 {
 public:
@@ -69,6 +71,7 @@ public:
 
     void OnFixedUpdate(my2d::Engine& engine, double fixedDt) override
     {
+        EnemyAI_FixedUpdate(engine, m_rooms.GetScene(), (float)fixedDt, m_rooms.GetPlayer());
         my2d::PlatformerController_FixedUpdate(engine, m_rooms.GetScene(), (float)fixedDt);
         my2d::Combat_PrePhysics(engine, m_rooms.GetScene(), (float)fixedDt);
     }

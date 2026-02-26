@@ -361,11 +361,45 @@ namespace my2d
         // who can this hit (physics category bits)
         uint64_t targetMaskBits = my2d::PhysicsLayers::Enemy;
 
+        // If false: ignore keyboard; attack starts when attackRequested is set by AI/system
+        bool useInput = true;
+
+        // runtime (not serialized)
+        bool attackRequested = false;
+
         // runtime
         float activeTimer = 0.0f;
         float cooldownTimer = 0.0f;
         b2ShapeId hitboxShapeId = b2_nullShapeId;
         void* runtimeUserData = nullptr; // HitboxRuntime*
+    };
+
+    struct FacingComponent
+    {
+        int facing = 1; // -1 left, +1 right
+    };
+
+    struct EnemyAIComponent
+    {
+        // movement
+        float patrolSpeedPx = 120.0f;
+        float chaseSpeedPx = 180.0f;
+
+        // sensing (pixels)
+        float aggroRangePx = 260.0f;
+        float deaggroRangePx = 340.0f;
+        float attackRangePx = 60.0f;
+
+        // edge/wall checks
+        float ledgeCheckDownPx = 50.0f;
+        float wallCheckForwardPx = 14.0f;
+
+        // behavior
+        bool canPatrol = true;
+        bool canChase = true;
+
+        // runtime
+        bool aggro = false;
     };
 
 }

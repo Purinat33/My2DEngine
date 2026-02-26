@@ -44,8 +44,12 @@ namespace my2d
 
     static int FacingFor(entt::registry& reg, entt::entity e)
     {
+        if (reg.any_of<FacingComponent>(e))
+            return reg.get<FacingComponent>(e).facing;
+
         if (reg.any_of<PlatformerControllerComponent>(e))
             return reg.get<PlatformerControllerComponent>(e).facing;
+
         return 1;
     }
 
@@ -102,8 +106,18 @@ namespace my2d
                 DestroyHitboxShape(atk);
 
             // start attack
-            if (atk.cooldownTimer <= 0.0f && engine.GetInput().WasKeyPressed(atk.attackKey))
+            bool startAttack = false;
+            if (atk.cooldownTimer <= 0.0f)
             {
+                if (atk.useInput)
+                    startAttack = engine.GetInput().WasKeyPressed(atk.attackKey);
+                else
+                    startAttack = atk.attackRequested;
+            }
+
+            if (startAttack)
+            {
+                atk.attackRequested = false;
                 // ensure runtime exists
                 Physics_CreateRuntime(scene, engine.GetPhysics(), engine.PixelsPerMeter());
                 if (!b2Body_IsValid(rb.bodyId))
