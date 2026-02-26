@@ -77,7 +77,17 @@ public:
 
         auto& pc = m_player.Add<my2d::PlatformerControllerComponent>();
         pc.moveSpeedPx = 320.0f;
-        pc.jumpSpeedPx = 720.0f;
+        
+        // --- One-shot jump height tuning ---
+        const float desiredJumpHeightPx = 200.0f; // try 120..180 depending on feel
+
+        // gravity is in m/s^2, convert to px/s^2
+        b2Vec2 g = b2World_GetGravity(engine.GetPhysics().WorldId()); // Box2D 3.x
+        const float gPx = std::abs(g.y) * engine.PixelsPerMeter() * rb.gravityScale;
+
+        // v = sqrt(2*g*h)
+        pc.jumpSpeedPx = std::sqrt(2.0f * gPx * desiredJumpHeightPx);
+
         pc.coyoteTime = 0.10f;
         pc.jumpBufferTime = 0.12f;
         pc.groundCheckDistancePx = 8.0f;
