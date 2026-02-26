@@ -37,6 +37,9 @@ namespace my2d
         dst.w = worldSize.x * m_camera.Zoom();
         dst.h = worldSize.y * m_camera.Zoom();
 
-        SDL_RenderCopyExF(m_renderer, native, srcRect, &dst, rotationDeg, nullptr, flip);
+        if (SDL_RenderCopyExF(m_renderer, native, srcRect, &dst, rotationDeg, nullptr, flip) != 0)
+        {
+            spdlog::error("SDL_RenderCopyExF failed: {}", SDL_GetError());
+        }
     }
 }

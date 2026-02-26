@@ -9,6 +9,41 @@ public:
     {
         m_scene = std::make_unique<my2d::Scene>();
 
+        auto tmEnt = m_scene->CreateEntity("Tilemap");
+        auto& tmT = tmEnt.Get<my2d::TransformComponent>();
+        tmT.position = { -400.0f, -200.0f }; // move map so origin isn’t centered
+
+        auto& tm = tmEnt.Add<my2d::TilemapComponent>();
+        tm.width = 50;
+        tm.height = 25;
+        tm.tileWidth = 32;
+        tm.tileHeight = 32;
+
+        tm.tileset.texturePath = "tiles.png";
+        tm.tileset.tileWidth = 32;
+        tm.tileset.tileHeight = 32;
+        tm.tileset.columns = 8;
+        tm.tileset.margin = 0;
+        tm.tileset.spacing = 0;
+
+        my2d::TileLayer base;
+        base.name = "Base";
+        base.layer = -10; // behind sprites
+        base.tiles.assign(tm.width * tm.height, -1);
+
+        // simple pattern
+        for (int y = 0; y < tm.height; ++y)
+        {
+            for (int x = 0; x < tm.width; ++x)
+            {
+                const int idx = y * tm.width + x;
+                if (y == tm.height - 1) base.tiles[idx] = 1;         // ground row
+                else if ((x + y) % 17 == 0) base.tiles[idx] = 5;     // dots
+            }
+        }
+
+        tm.layers.push_back(std::move(base));
+
         auto e = m_scene->CreateEntity("TestSprite");
         auto& t = e.Get<my2d::TransformComponent>();
         t.position = { 0.0f, 0.0f };

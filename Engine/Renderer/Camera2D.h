@@ -7,6 +7,8 @@ namespace my2d
     {
     public:
         void SetViewport(int w, int h) { m_viewW = w; m_viewH = h; }
+        int ViewportW() const { return m_viewW; }
+        int ViewportH() const { return m_viewH; }
         void SetPosition(const glm::vec2& p) { m_position = p; }
         void SetZoom(float z) { m_zoom = (z <= 0.0001f) ? 0.0001f : z; }
 

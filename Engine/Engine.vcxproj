@@ -157,6 +157,7 @@
     <ClInclude Include="Renderer\Camera2D.h" />
     <ClInclude Include="Renderer\Renderer2D.h" />
     <ClInclude Include="Renderer\Texture2D.h" />
+    <ClInclude Include="Renderer\TilemapRenderer2D.h" />
     <ClInclude Include="Scene\Components.h" />
     <ClInclude Include="Scene\Entity.h" />
     <ClInclude Include="Scene\Scene.h" />
@@ -169,6 +170,7 @@
     </ClCompile>
     <ClCompile Include="Renderer\Renderer2D.cpp" />
     <ClCompile Include="Renderer\Texture2D.cpp" />
+    <ClCompile Include="Renderer\TilemapRenderer2D.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
