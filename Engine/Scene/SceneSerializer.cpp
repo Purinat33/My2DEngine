@@ -6,6 +6,9 @@
 
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <filesystem>
+
+#include <spdlog/spdlog.h>
 
 namespace my2d
 {
@@ -17,6 +20,24 @@ namespace my2d
     {
         if (!j.is_object()) return def;
         return { j.value("x", def.x), j.value("y", def.y) };
+    }
+
+    static std::string JoinRelativeToFile2(const std::string& filePath, const std::string& rel)
+    {
+        namespace fs = std::filesystem;
+        fs::path base = fs::path(filePath).parent_path();
+        fs::path p = fs::path(rel);
+        if (p.is_absolute() || p.has_root_name())
+            return p.lexically_normal().string();
+        return (base / p).lexically_normal().string();
+    }
+
+    static bool LoadJsonFile2(const std::string& path, nlohmann::json& out)
+    {
+        std::ifstream in(path, std::ios::binary);
+        if (!in) return false;
+        in >> out;
+        return true;
     }
 
     static json ColorToJson(const SDL_Color& c) { return json{ {"r", c.r}, {"g", c.g}, {"b", c.b}, {"a", c.a} }; }
@@ -139,7 +160,11 @@ namespace my2d
             {"layer", c.layer},
             {"useSourceRect", c.useSourceRect},
             {"sourceRect", RectToJson(c.sourceRect)},
-            {"flip", (int)c.flip}
+            {"flip", (int)c.flip},
+            {"atlasPath", c.atlasPath},
+            {"regionName", c.regionName},
+            {"pivot", Vec2ToJson(c.pivot)},
+            {"offset", Vec2ToJson(c.offset)},
         };
     }
 
@@ -314,6 +339,10 @@ namespace my2d
         c.useSourceRect = j.value("useSourceRect", c.useSourceRect);
         c.sourceRect = JsonToRect(j.value("sourceRect", json{}), c.sourceRect);
         c.flip = (SDL_RendererFlip)j.value("flip", (int)c.flip);
+        c.atlasPath = j.value("atlasPath", c.atlasPath);
+        c.regionName = j.value("regionName", c.regionName);
+        c.pivot = JsonToVec2(j.value("pivot", json{}), c.pivot);
+        c.offset = JsonToVec2(j.value("offset", json{}), c.offset);
     }
 
     static void LoadTilemap(entt::registry& reg, entt::entity e, const json& j)
@@ -482,6 +511,29 @@ namespace my2d
         c.isOpen = false;
     }
 
+    static void SaveAnimator(json& e, const AnimatorComponent& c)
+    {
+        e["Animator"] = json{
+            {"animSetPath", c.animSetPath},
+            {"clip", c.clip},
+            {"playing", c.playing},
+            {"speed", c.speed}
+        };
+    }
+
+    static void LoadAnimator(entt::registry& reg, entt::entity e, const json& j)
+    {
+        auto& c = reg.emplace_or_replace<AnimatorComponent>(e);
+        c.animSetPath = j.value("animSetPath", c.animSetPath);
+        c.clip = j.value("clip", c.clip);
+        c.playing = j.value("playing", c.playing);
+        c.speed = (float)j.value("speed", (double)c.speed);
+
+        // runtime reset
+        c.time = 0.0f;
+        c.frameIndex = 0;
+    }
+
     // ---- main API ----
     bool SceneSerializer::SaveToFile(const Scene& scene, const std::string& path)
     {
@@ -500,6 +552,8 @@ namespace my2d
             json e;
             e["id"] = idc.id;
             e["tag"] = tag.tag;
+            if (reg.any_of<PrefabComponent>(ent))
+                e["prefab"] = reg.get<PrefabComponent>(ent).prefabPath;
 
             // Transform always exists in your CreateEntity, but be safe:
             if (reg.any_of<TransformComponent>(ent))
@@ -523,6 +577,9 @@ namespace my2d
             if (reg.any_of<PlatformerControllerComponent>(ent))
                 SavePlatformer(e, reg.get<PlatformerControllerComponent>(ent));
 
+            if (reg.any_of<AnimatorComponent>(ent))
+                SaveAnimator(e, reg.get<AnimatorComponent>(ent));
+
             if (reg.any_of<PersistentFlagComponent>(ent))
                 SavePersistentFlag(e, reg.get<PersistentFlagComponent>(ent));
 
@@ -540,8 +597,12 @@ namespace my2d
 
             root["entities"].push_back(std::move(e));
         }
+        namespace fs = std::filesystem;
+        fs::path p(path);
+        p = p.lexically_normal().make_preferred();
+        fs::create_directories(p.parent_path());
 
-        std::ofstream out(path, std::ios::binary);
+        std::ofstream out(p, std::ios::binary);
         if (!out) return false;
         out << root.dump(2);
         return true;
@@ -549,28 +610,117 @@ namespace my2d
 
     bool SceneSerializer::LoadFromFile(Scene& scene, const std::string& path)
     {
-        std::ifstream in(path, std::ios::binary);
-        if (!in) return false;
+        namespace fs = std::filesystem;
+
+        fs::path p(path);
+        p = p.lexically_normal().make_preferred();
+
+        if (!fs::exists(p))
+        {
+            spdlog::error("SceneSerializer: file does not exist: {}", p.string());
+            spdlog::error("CWD: {}", fs::current_path().string());
+            return false;
+        }
+
+        std::ifstream in(p, std::ios::binary);
+        if (!in)
+        {
+            spdlog::error("SceneSerializer: cannot open: {}", p.string());
+            spdlog::error("CWD: {}", fs::current_path().string());
+            return false;
+        }
 
         json root;
-        in >> root;
+        try
+        {
+            in >> root;
+        }
+        catch (const std::exception& ex)
+        {
+            spdlog::error("SceneSerializer: JSON parse failed for '{}': {}", p.string(), ex.what());
+            return false;
+        }
 
         auto& reg = scene.Registry();
         reg.clear();
 
         if (!root.contains("entities") || !root["entities"].is_array())
+        {
+            spdlog::error("SceneSerializer: '{}' missing 'entities' array", p.string());
             return false;
+        }
 
         for (auto& je : root["entities"])
         {
             const uint64_t id = je.value("id", 0ull);
-            const std::string tag = je.value("tag", std::string("Entity"));
 
+            // Choose tag: scene tag overrides prefab tag
+            std::string tag = je.value("tag", std::string("Entity"));
+
+            // Optional prefab
+            nlohmann::json baseEntity;
+            bool hasPrefab = false;
+
+            if (je.contains("prefab") && je["prefab"].is_string())
+            {
+                const std::string prefabRel = je["prefab"].get<std::string>();
+                const std::string prefabFull = JoinRelativeToFile2(path, prefabRel);
+
+                nlohmann::json prefRoot;
+                if (!LoadJsonFile2(prefabFull, prefRoot))
+                {
+                    spdlog::error("SceneSerializer: failed to load prefab '{}'", prefabFull);
+                }
+                else
+                {
+                    // prefab file can be either:
+                    // A) {"prefabVersion":1, "entity": { ...entity json... }}
+                    // B) { ...entity json... } directly
+                    if (prefRoot.contains("entity") && prefRoot["entity"].is_object())
+                        baseEntity = prefRoot["entity"];
+                    else
+                        baseEntity = prefRoot;
+
+                    // If scene didn't specify tag, allow prefab tag
+                    if (!je.contains("tag") && baseEntity.contains("tag") && baseEntity["tag"].is_string())
+                        tag = baseEntity["tag"].get<std::string>();
+
+                    hasPrefab = true;
+                }
+            }
+
+            // Create entity with stable id
             Entity ent = scene.CreateEntityWithId(id, tag);
             const entt::entity h = ent.Handle();
 
+            // Store prefab link (if any)
+            if (hasPrefab && je.contains("prefab") && je["prefab"].is_string())
+            {
+                auto& pc = reg.emplace_or_replace<PrefabComponent>(h);
+                pc.prefabPath = je["prefab"].get<std::string>();
+            }
+
+            // 1) Apply prefab components first
+            if (hasPrefab)
+            {
+                if (baseEntity.contains("Transform")) LoadTransform(reg, h, baseEntity["Transform"]);
+                if (baseEntity.contains("SpriteRenderer")) LoadSprite(reg, h, baseEntity["SpriteRenderer"]);
+                if (baseEntity.contains("Animator")) LoadAnimator(reg, h, baseEntity["Animator"]);
+                if (baseEntity.contains("Tilemap")) LoadTilemap(reg, h, baseEntity["Tilemap"]);
+                if (baseEntity.contains("TilemapCollider")) LoadTilemapCollider(reg, h, baseEntity["TilemapCollider"]);
+                if (baseEntity.contains("RigidBody2D")) LoadRigidBody(reg, h, baseEntity["RigidBody2D"]);
+                if (baseEntity.contains("BoxCollider2D")) LoadBoxCollider(reg, h, baseEntity["BoxCollider2D"]);
+                if (baseEntity.contains("PlatformerController")) LoadPlatformer(reg, h, baseEntity["PlatformerController"]);
+                if (baseEntity.contains("PersistentFlag")) LoadPersistentFlag(reg, h, baseEntity["PersistentFlag"]);
+                if (baseEntity.contains("GrantProgression")) LoadGrantProgression(reg, h, baseEntity["GrantProgression"]);
+                if (baseEntity.contains("Gate")) LoadGate(reg, h, baseEntity["Gate"]);
+                // (Add your combat/AI loads here if you already implemented them)
+            }
+
+            // 2) Apply scene entity overrides second
             if (je.contains("Transform")) LoadTransform(reg, h, je["Transform"]);
             if (je.contains("SpriteRenderer")) LoadSprite(reg, h, je["SpriteRenderer"]);
+            if (je.contains("Animator")) LoadAnimator(reg, h, je["Animator"]);
             if (je.contains("Tilemap")) LoadTilemap(reg, h, je["Tilemap"]);
             if (je.contains("TilemapCollider")) LoadTilemapCollider(reg, h, je["TilemapCollider"]);
             if (je.contains("RigidBody2D")) LoadRigidBody(reg, h, je["RigidBody2D"]);
@@ -579,8 +729,6 @@ namespace my2d
             if (je.contains("PersistentFlag")) LoadPersistentFlag(reg, h, je["PersistentFlag"]);
             if (je.contains("GrantProgression")) LoadGrantProgression(reg, h, je["GrantProgression"]);
             if (je.contains("Gate")) LoadGate(reg, h, je["Gate"]);
-            if (je.contains("PlayerSpawn")) LoadPlayerSpawn(reg, h, je["PlayerSpawn"]);
-            if (je.contains("Door")) LoadDoor(reg, h, je["Door"]);
         }
 
         return true;

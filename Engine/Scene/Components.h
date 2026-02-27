@@ -422,4 +422,9 @@ namespace my2d
         float speed = 1.0f;
     };
 
+    struct PrefabComponent
+    {
+        std::string prefabPath; // e.g. "Prefabs/player.prefab.json" (content-root relative)
+    };
+
 }

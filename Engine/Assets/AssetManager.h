@@ -15,6 +15,7 @@ namespace my2d
     public:
         void SetRenderer(SDL_Renderer* renderer) { m_renderer = renderer; }
         void SetContentRoot(const std::string& root); 
+        const std::string& ContentRoot() const { return m_contentRoot; }
 
         std::shared_ptr<Texture2D> GetTexture(const std::string& path);
 

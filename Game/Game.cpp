@@ -19,6 +19,10 @@
 
 #include "Gameplay/EnemyAISystem.h"
 
+
+#include <nlohmann/json.hpp>
+#include <fstream>
+
 class MyGame : public my2d::App
 {
 public:
@@ -185,6 +189,26 @@ private:
         }
     }
 
+
+    static bool IsValidSceneFile(const std::filesystem::path& p)
+    {
+        if (!std::filesystem::exists(p)) return false;
+
+        std::ifstream in(p, std::ios::binary);
+        if (!in) return false;
+
+        try
+        {
+            nlohmann::json j;
+            in >> j;
+            return j.contains("entities") && j["entities"].is_array();
+        }
+        catch (...)
+        {
+            return false;
+        }
+    }
+
     void EnsureDefaultRoomsExist(my2d::Engine& engine)
     {
         namespace fs = std::filesystem;
@@ -195,7 +219,7 @@ private:
         fs::path roomAPath = scenesDir / "room_start.scene.json";
         fs::path roomBPath = scenesDir / "room_b.scene.json";
 
-        if (fs::exists(roomAPath) && fs::exists(roomBPath))
+        if (IsValidSceneFile(roomAPath) && IsValidSceneFile(roomBPath))
             return;
 
         spdlog::info("Scenes not found; generating default rooms into {}", scenesDir.string());

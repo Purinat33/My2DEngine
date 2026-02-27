@@ -46,11 +46,42 @@ namespace my2d
     {
         namespace fs = std::filesystem;
 
-        fs::path p(root);
-        if (!p.is_absolute())
-            p = fs::absolute(p);
+        fs::path rel(root);
 
-        m_contentRoot = p.lexically_normal().string();
+        // If absolute already, keep it
+        fs::path resolved;
+        if (rel.is_absolute() || rel.has_root_name())
+        {
+            resolved = rel;
+        }
+        else
+        {
+            // Search upward from current working directory
+            fs::path base = fs::current_path();
+            bool found = false;
+
+            for (int i = 0; i < 10; ++i)
+            {
+                fs::path cand = (base / rel).lexically_normal();
+                if (fs::exists(cand))
+                {
+                    resolved = cand;
+                    found = true;
+                    break;
+                }
+                if (!base.has_parent_path())
+                    break;
+                base = base.parent_path();
+            }
+
+            if (!found)
+            {
+                // Fallback: absolute from current working dir
+                resolved = fs::absolute(rel).lexically_normal();
+            }
+        }
+
+        m_contentRoot = resolved.lexically_normal().string();
     }
 
     std::shared_ptr<Texture2D> AssetManager::GetTexture(const std::string& path)

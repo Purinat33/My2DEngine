@@ -12,6 +12,7 @@
 #include "Physics/PhysicsSystem.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <spdlog/spdlog.h>
 
 namespace my2d
@@ -25,12 +26,17 @@ namespace my2d
 
     std::string RoomManager::ResolveScenePath(const Engine& engine, const std::string& rel) const
     {
-        // rel like "Scenes/room_a.scene.json"
-        if (rel.find(':') != std::string::npos) // crude "absolute on Windows"
-            return rel;
+        namespace fs = std::filesystem;
 
-        // contentRoot like "Game/Content"
-        return JoinPath(engine.ContentRoot(), rel);
+        fs::path p(rel);
+
+        // absolute already
+        if (p.is_absolute() || p.has_root_name())
+            return p.lexically_normal().make_preferred().string();
+
+        fs::path root(engine.ContentRoot());
+        fs::path full = (root / p).lexically_normal();
+        return full.make_preferred().string();
     }
 
     Entity RoomManager::FindSpawn(const std::string& name)
@@ -121,11 +127,15 @@ namespace my2d
             auto& reg = m_scene->Registry();
             Entity foundPlayer{};
 
-            auto view = reg.view<TransformComponent, RigidBody2DComponent, BoxCollider2DComponent, PlatformerControllerComponent>();
+            auto view = reg.view<TagComponent, TransformComponent, RigidBody2DComponent, BoxCollider2DComponent, PlatformerControllerComponent>();
             for (auto e : view)
             {
-                foundPlayer = Entity(e, m_scene.get());
-                break;
+                auto& tag = view.get<TagComponent>(e);
+                if (tag.tag == "Player")
+                {
+                    foundPlayer = Entity(e, m_scene.get());
+                    break;
+                }
             }
 
             if (foundPlayer)

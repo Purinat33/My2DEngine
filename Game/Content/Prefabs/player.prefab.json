@@ -1,0 +1,89 @@
+{
+  "prefabVersion": 1,
+  "entity": {
+    "tag": "Player",
+    "SpriteRenderer": {
+      "atlasPath": "Atlases/player.atlas.json",
+      "regionName": "",
+      "size": {
+        "x": 48,
+        "y": 48
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "offset": {
+        "x": 14,
+        "y": 52
+      },
+      "tint": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 255
+      },
+      "layer": 0,
+      "useSourceRect": false,
+      "sourceRect": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+      },
+      "flip": 0
+    },
+    "Animator": {
+      "animSetPath": "Animations/player.anim.json",
+      "clip": "idle",
+      "playing": true,
+      "speed": 1.0
+    },
+    "RigidBody2D": {
+      "type": "Dynamic",
+      "enabled": true,
+      "fixedRotation": true,
+      "enableSleep": false,
+      "gravityScale": 1.0,
+      "linearDamping": 0.0,
+      "angularDamping": 0.0,
+      "isBullet": false
+    },
+    "BoxCollider2D": {
+      "size": {
+        "x": 28,
+        "y": 52
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "enabled": true,
+      "density": 1.0,
+      "friction": 0.0,
+      "restitution": 0.0,
+      "isSensor": false,
+      "categoryBits": 2,
+      "maskBits": 13
+    },
+    "PlatformerController": {
+      "moveSpeedPx": 320.0,
+      "accelPx": 2500.0,
+      "decelPx": 3000.0,
+      "jumpSpeedPx": 650.0,
+      "coyoteTime": 0.10,
+      "jumpBufferTime": 0.12,
+      "groundCheckDistancePx": 12.0,
+      "groundRayInsetPx": 4.0,
+      "left": 4,
+      "right": 7,
+      "jump": 44,
+      "dash": 225,
+      "dashSpeedPx": 850.0,
+      "dashTime": 0.12,
+      "dashCooldown": 0.25,
+      "maxGroundSlopeDeg": 55.0,
+      "maxJumpSlopeDeg": 15.0
+    }
+  }
+}

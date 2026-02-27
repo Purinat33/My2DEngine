@@ -22,5 +22,11 @@
   <ItemGroup>
     <None Include="Content\Atlases\player.atlas.json" />
     <None Include="Content\Animations\player.anim.json" />
+    <None Include="Content\Prefabs\player.prefab.json">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Content\Scenes\room_start.scene.json">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

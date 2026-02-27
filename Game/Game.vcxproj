@@ -140,6 +140,8 @@
   <ItemGroup>
     <None Include="Content\Animations\player.anim.json" />
     <None Include="Content\Atlases\player.atlas.json" />
+    <None Include="Content\Prefabs\player.prefab.json" />
+    <None Include="Content\Scenes\room_start.scene.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
