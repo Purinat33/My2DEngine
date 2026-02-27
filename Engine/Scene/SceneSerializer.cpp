@@ -124,6 +124,182 @@ namespace my2d
         return out;
     }
 
+
+    // ---- Facing ----
+    static void SaveFacing(json& e, const FacingComponent& c)
+    {
+        e["Facing"] = json{ {"facing", c.facing} };
+    }
+
+    static void LoadFacing(entt::registry& reg, entt::entity e, const json& j)
+    {
+        auto& c = reg.emplace_or_replace<FacingComponent>(e);
+        c.facing = j.value("facing", c.facing);
+    }
+
+    // ---- Team ----
+    static const char* TeamToString(Team t)
+    {
+        switch (t)
+        {
+        case Team::Player: return "Player";
+        case Team::Enemy: return "Enemy";
+        default: return "Neutral";
+        }
+    }
+
+    static Team TeamFromString(const std::string& s)
+    {
+        if (s == "Player") return Team::Player;
+        if (s == "Enemy") return Team::Enemy;
+        return Team::Neutral;
+    }
+
+    static void SaveTeam(json& e, const TeamComponent& c)
+    {
+        e["Team"] = json{ {"team", TeamToString(c.team)} };
+    }
+
+    static void LoadTeam(entt::registry& reg, entt::entity e, const json& j)
+    {
+        auto& c = reg.emplace_or_replace<TeamComponent>(e);
+        c.team = TeamFromString(j.value("team", std::string(TeamToString(c.team))));
+    }
+
+    // ---- Health ----
+    static void SaveHealth(json& e, const HealthComponent& c)
+    {
+        e["Health"] = json{ {"maxHp", c.maxHp}, {"hp", c.hp} };
+    }
+
+    static void LoadHealth(entt::registry& reg, entt::entity e, const json& j)
+    {
+        auto& c = reg.emplace_or_replace<HealthComponent>(e);
+        c.maxHp = j.value("maxHp", c.maxHp);
+        c.hp = j.value("hp", c.hp);
+    }
+
+    // ---- Hurtbox ----
+    static void SaveHurtbox(json& e, const HurtboxComponent& c)
+    {
+        e["Hurtbox"] = json{ {"enabled", c.enabled} };
+    }
+
+    static void LoadHurtbox(entt::registry& reg, entt::entity e, const json& j)
+    {
+        auto& c = reg.emplace_or_replace<HurtboxComponent>(e);
+        c.enabled = j.value("enabled", c.enabled);
+    }
+
+    // ---- MeleeAttack (CONFIG ONLY; do NOT serialize runtime timers/shape ids) ----
+    static void SaveMeleeAttack(json& e, const MeleeAttackComponent& c)
+    {
+        e["MeleeAttack"] = json{
+            {"attackKey", (int)c.attackKey},
+            {"useInput", c.useInput},
+
+            {"damage", c.damage},
+            {"activeTime", c.activeTime},
+            {"cooldown", c.cooldown},
+
+            {"hitboxSizePx", Vec2ToJson(c.hitboxSizePx)},
+            {"hitboxOffsetPx", Vec2ToJson(c.hitboxOffsetPx)},
+
+            {"allowAimUp", c.allowAimUp},
+            {"allowAimDown", c.allowAimDown},
+            {"allowDownAttackOnGround", c.allowDownAttackOnGround},
+            {"aimUpKey", (int)c.aimUpKey},
+            {"aimDownKey", (int)c.aimDownKey},
+
+            {"hitboxSizeUpPx", Vec2ToJson(c.hitboxSizeUpPx)},
+            {"hitboxOffsetUpPx", Vec2ToJson(c.hitboxOffsetUpPx)},
+            {"hitboxSizeDownPx", Vec2ToJson(c.hitboxSizeDownPx)},
+            {"hitboxOffsetDownPx", Vec2ToJson(c.hitboxOffsetDownPx)},
+
+            {"knockbackSpeedPx", c.knockbackSpeedPx},
+            {"knockbackUpPx", c.knockbackUpPx},
+            {"victimInvuln", c.victimInvuln},
+            {"targetMaskBits", c.targetMaskBits},
+
+            {"pogoOnDownHit", c.pogoOnDownHit},
+            {"pogoReboundSpeedPx", c.pogoReboundSpeedPx}
+        };
+    }
+
+    static void LoadMeleeAttack(entt::registry& reg, entt::entity e, const json& j)
+    {
+        auto& c = reg.emplace_or_replace<MeleeAttackComponent>(e);
+
+        c.attackKey = (SDL_Scancode)j.value("attackKey", (int)c.attackKey);
+        c.useInput = j.value("useInput", c.useInput);
+
+        c.damage = j.value("damage", c.damage);
+        c.activeTime = (float)j.value("activeTime", (double)c.activeTime);
+        c.cooldown = (float)j.value("cooldown", (double)c.cooldown);
+
+        c.hitboxSizePx = JsonToVec2(j.value("hitboxSizePx", json{}), c.hitboxSizePx);
+        c.hitboxOffsetPx = JsonToVec2(j.value("hitboxOffsetPx", json{}), c.hitboxOffsetPx);
+
+        c.allowAimUp = j.value("allowAimUp", c.allowAimUp);
+        c.allowAimDown = j.value("allowAimDown", c.allowAimDown);
+        c.allowDownAttackOnGround = j.value("allowDownAttackOnGround", c.allowDownAttackOnGround);
+        c.aimUpKey = (SDL_Scancode)j.value("aimUpKey", (int)c.aimUpKey);
+        c.aimDownKey = (SDL_Scancode)j.value("aimDownKey", (int)c.aimDownKey);
+
+        c.hitboxSizeUpPx = JsonToVec2(j.value("hitboxSizeUpPx", json{}), c.hitboxSizeUpPx);
+        c.hitboxOffsetUpPx = JsonToVec2(j.value("hitboxOffsetUpPx", json{}), c.hitboxOffsetUpPx);
+        c.hitboxSizeDownPx = JsonToVec2(j.value("hitboxSizeDownPx", json{}), c.hitboxSizeDownPx);
+        c.hitboxOffsetDownPx = JsonToVec2(j.value("hitboxOffsetDownPx", json{}), c.hitboxOffsetDownPx);
+
+        c.knockbackSpeedPx = (float)j.value("knockbackSpeedPx", (double)c.knockbackSpeedPx);
+        c.knockbackUpPx = (float)j.value("knockbackUpPx", (double)c.knockbackUpPx);
+        c.victimInvuln = (float)j.value("victimInvuln", (double)c.victimInvuln);
+        c.targetMaskBits = (uint64_t)j.value("targetMaskBits", (uint64_t)c.targetMaskBits);
+
+        c.pogoOnDownHit = j.value("pogoOnDownHit", c.pogoOnDownHit);
+        c.pogoReboundSpeedPx = (float)j.value("pogoReboundSpeedPx", (double)c.pogoReboundSpeedPx);
+
+        // runtime reset
+        c.activeTimer = 0.0f;
+        c.cooldownTimer = 0.0f;
+        c.hitboxShapeId = b2_nullShapeId;
+        c.runtimeUserData = nullptr;
+        c.attackRequested = false;
+    }
+
+    // ---- EnemyAI ----
+    static void SaveEnemyAI(json& e, const EnemyAIComponent& c)
+    {
+        e["EnemyAI"] = json{
+            {"patrolSpeedPx", c.patrolSpeedPx},
+            {"chaseSpeedPx", c.chaseSpeedPx},
+            {"aggroRangePx", c.aggroRangePx},
+            {"deaggroRangePx", c.deaggroRangePx},
+            {"attackRangePx", c.attackRangePx},
+            {"ledgeCheckDownPx", c.ledgeCheckDownPx},
+            {"wallCheckForwardPx", c.wallCheckForwardPx},
+            {"canPatrol", c.canPatrol},
+            {"canChase", c.canChase}
+        };
+    }
+
+    static void LoadEnemyAI(entt::registry& reg, entt::entity e, const json& j)
+    {
+        auto& c = reg.emplace_or_replace<EnemyAIComponent>(e);
+        c.patrolSpeedPx = (float)j.value("patrolSpeedPx", (double)c.patrolSpeedPx);
+        c.chaseSpeedPx = (float)j.value("chaseSpeedPx", (double)c.chaseSpeedPx);
+        c.aggroRangePx = (float)j.value("aggroRangePx", (double)c.aggroRangePx);
+        c.deaggroRangePx = (float)j.value("deaggroRangePx", (double)c.deaggroRangePx);
+        c.attackRangePx = (float)j.value("attackRangePx", (double)c.attackRangePx);
+        c.ledgeCheckDownPx = (float)j.value("ledgeCheckDownPx", (double)c.ledgeCheckDownPx);
+        c.wallCheckForwardPx = (float)j.value("wallCheckForwardPx", (double)c.wallCheckForwardPx);
+        c.canPatrol = j.value("canPatrol", c.canPatrol);
+        c.canChase = j.value("canChase", c.canChase);
+
+        // runtime reset
+        c.aggro = false;
+    }
+
     static void SavePlayerSpawn(json& e, const PlayerSpawnComponent& c)
     {
         e["PlayerSpawn"] = json{ {"name", c.name} };
@@ -595,6 +771,13 @@ namespace my2d
             if (reg.any_of<DoorComponent>(ent))
                 SaveDoor(e, reg.get<DoorComponent>(ent));
 
+            if (reg.any_of<FacingComponent>(ent)) SaveFacing(e, reg.get<FacingComponent>(ent));
+            if (reg.any_of<TeamComponent>(ent)) SaveTeam(e, reg.get<TeamComponent>(ent));
+            if (reg.any_of<HealthComponent>(ent)) SaveHealth(e, reg.get<HealthComponent>(ent));
+            if (reg.any_of<HurtboxComponent>(ent)) SaveHurtbox(e, reg.get<HurtboxComponent>(ent));
+            if (reg.any_of<MeleeAttackComponent>(ent)) SaveMeleeAttack(e, reg.get<MeleeAttackComponent>(ent));
+            if (reg.any_of<EnemyAIComponent>(ent)) SaveEnemyAI(e, reg.get<EnemyAIComponent>(ent));
+
             root["entities"].push_back(std::move(e));
         }
         namespace fs = std::filesystem;
@@ -715,6 +898,12 @@ namespace my2d
                 if (baseEntity.contains("GrantProgression")) LoadGrantProgression(reg, h, baseEntity["GrantProgression"]);
                 if (baseEntity.contains("Gate")) LoadGate(reg, h, baseEntity["Gate"]);
                 // (Add your combat/AI loads here if you already implemented them)
+                if (baseEntity.contains("Facing")) LoadFacing(reg, h, baseEntity["Facing"]);
+                if (baseEntity.contains("Team")) LoadTeam(reg, h, baseEntity["Team"]);
+                if (baseEntity.contains("Health")) LoadHealth(reg, h, baseEntity["Health"]);
+                if (baseEntity.contains("Hurtbox")) LoadHurtbox(reg, h, baseEntity["Hurtbox"]);
+                if (baseEntity.contains("MeleeAttack")) LoadMeleeAttack(reg, h, baseEntity["MeleeAttack"]);
+                if (baseEntity.contains("EnemyAI")) LoadEnemyAI(reg, h, baseEntity["EnemyAI"]);
             }
 
             // 2) Apply scene entity overrides second
@@ -729,8 +918,15 @@ namespace my2d
             if (je.contains("PersistentFlag")) LoadPersistentFlag(reg, h, je["PersistentFlag"]);
             if (je.contains("GrantProgression")) LoadGrantProgression(reg, h, je["GrantProgression"]);
             if (je.contains("Gate")) LoadGate(reg, h, je["Gate"]);
+            if (je.contains("Facing")) LoadFacing(reg, h, je["Facing"]);
+            if (je.contains("Team")) LoadTeam(reg, h, je["Team"]);
+            if (je.contains("Health")) LoadHealth(reg, h, je["Health"]);
+            if (je.contains("Hurtbox")) LoadHurtbox(reg, h, je["Hurtbox"]);
+            if (je.contains("MeleeAttack")) LoadMeleeAttack(reg, h, je["MeleeAttack"]);
+            if (je.contains("EnemyAI")) LoadEnemyAI(reg, h, je["EnemyAI"]);
         }
 
         return true;
     }
+
 }
