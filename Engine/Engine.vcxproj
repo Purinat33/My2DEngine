@@ -169,8 +169,11 @@
     <ClInclude Include="Platform\SdlImage.h" />
     <ClInclude Include="Platform\SdlTtf.h" />
     <ClInclude Include="Platform\Window.h" />
+    <ClInclude Include="Renderer\AnimationSet.h" />
+    <ClInclude Include="Renderer\AnimationSystem.h" />
     <ClInclude Include="Renderer\Camera2D.h" />
     <ClInclude Include="Renderer\Renderer2D.h" />
+    <ClInclude Include="Renderer\SpriteAtlas.h" />
     <ClInclude Include="Renderer\Texture2D.h" />
     <ClInclude Include="Renderer\TilemapRenderer2D.h" />
     <ClInclude Include="Scene\Components.h" />
@@ -195,7 +198,10 @@
     <ClCompile Include="Physics\PhysicsSystem.cpp" />
     <ClCompile Include="Physics\PlatformerControllerSystem.cpp" />
     <ClCompile Include="Physics\TilemapColliderBuilder.cpp" />
+    <ClCompile Include="Renderer\AnimationSet.cpp" />
+    <ClCompile Include="Renderer\AnimationSystem.cpp" />
     <ClCompile Include="Renderer\Renderer2D.cpp" />
+    <ClCompile Include="Renderer\SpriteAtlas.cpp" />
     <ClCompile Include="Renderer\Texture2D.cpp" />
     <ClCompile Include="Renderer\TilemapRenderer2D.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />

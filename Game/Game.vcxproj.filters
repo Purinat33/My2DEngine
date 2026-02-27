@@ -19,4 +19,8 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Content\Atlases\player.atlas.json" />
+    <None Include="Content\Animations\player.anim.json" />
+  </ItemGroup>
 </Project>

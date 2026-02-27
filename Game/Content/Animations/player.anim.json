@@ -1,0 +1,20 @@
+{
+  "atlas": "../Atlases/player.atlas.json",
+  "clips": {
+    "idle": {
+      "frames": [ "player_idle_0", "player_idle_1", "player_idle_2", "player_idle_3" ],
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "frames": [ "player_walk_0" ],
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "frames": [ "player_jump_0" ],
+      "fps": 10,
+      "loop": false
+    }
+  }
+}

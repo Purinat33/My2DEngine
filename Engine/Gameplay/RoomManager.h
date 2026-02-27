@@ -12,7 +12,7 @@ namespace my2d
     class RoomManager
     {
     public:
-        bool LoadRoom(Engine& engine, const std::string& sceneRelPath, const std::string& spawnName);
+        bool LoadRoom(Engine& engine, std::string sceneRelPath, std::string spawnName);
         void Update(Engine& engine, float dt);
 
         Scene& GetScene() { return *m_scene; }

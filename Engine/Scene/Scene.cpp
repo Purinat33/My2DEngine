@@ -5,10 +5,13 @@
 #include "Renderer/Renderer2D.h"
 #include "Renderer/Texture2D.h"
 #include "Renderer/TilemapRenderer2D.h"
+#include "Renderer/AnimationSystem.h"
 
 #include <algorithm>
 #include <vector>
 #include <random>
+#include <Renderer/SpriteAtlas.h>
+
 
 namespace my2d
 {
@@ -70,9 +73,9 @@ namespace my2d
             m_registry.destroy(e.Handle());
     }
 
-    void Scene::OnUpdate(Engine&, double)
+    void Scene::OnUpdate(Engine& engine, double dt)
     {
-        // Hook for scripts/systems later.
+        AnimationSystem_Update(engine, *this, (float)dt);
     }
 
     void Scene::OnRender(Engine& engine)
@@ -130,22 +133,58 @@ namespace my2d
                 auto& sc = spriteView.get<SpriteRendererComponent>(e);
 
                 if (sc.layer != L) continue;
-                if (sc.texturePath.empty()) continue;
 
-                auto tex = engine.GetAssets().GetTexture(sc.texturePath);
-                if (!tex) continue;
+                // Pivot/offset drawing
+                const glm::vec2 worldSize = { sc.size.x * tc.scale.x, sc.size.y * tc.scale.y };
+                const glm::vec2 pivotScaled = { sc.pivot.x * worldSize.x, sc.pivot.y * worldSize.y };
+                const glm::vec2 offsetScaled = { sc.offset.x * tc.scale.x, sc.offset.y * tc.scale.y };
+                const glm::vec2 drawPos = tc.position + offsetScaled - pivotScaled;
 
-                const SDL_Rect* src = sc.useSourceRect ? &sc.sourceRect : nullptr;
+                const SDL_Rect* src = nullptr;
+                SDL_Rect atlasRect{};
 
-                engine.GetRenderer2D().DrawTexture(
-                    *tex,
-                    tc.position,
-                    { sc.size.x * tc.scale.x, sc.size.y * tc.scale.y },
-                    src,
-                    tc.rotationDeg,
-                    sc.flip,
-                    sc.tint
-                );
+                // Atlas mode
+                if (!sc.atlasPath.empty() && !sc.regionName.empty())
+                {
+                    auto atlas = engine.GetAssets().GetAtlas(sc.atlasPath);
+                    if (!atlas) continue;
+
+                    const SpriteRegion* region = atlas->GetRegion(sc.regionName);
+                    if (!region || !region->texture) continue;
+
+                    atlasRect = region->rect;
+                    src = &atlasRect;
+
+                    engine.GetRenderer2D().DrawTexture(
+                        *region->texture,
+                        drawPos,
+                        worldSize,
+                        src,
+                        tc.rotationDeg,
+                        sc.flip,
+                        sc.tint
+                    );
+                }
+                else
+                {
+                    // Legacy texturePath mode
+                    if (sc.texturePath.empty()) continue;
+
+                    auto tex = engine.GetAssets().GetTexture(sc.texturePath);
+                    if (!tex) continue;
+
+                    src = sc.useSourceRect ? &sc.sourceRect : nullptr;
+
+                    engine.GetRenderer2D().DrawTexture(
+                        *tex,
+                        drawPos,
+                        worldSize,
+                        src,
+                        tc.rotationDeg,
+                        sc.flip,
+                        sc.tint
+                    );
+                }
             }
         }
     }

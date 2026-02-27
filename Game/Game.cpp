@@ -66,6 +66,36 @@ public:
 
         // Camera follows current player
         auto& cam = engine.GetRenderer2D().GetCamera();
+        // Update player animation clip from movement state
+        {
+            auto player = m_rooms.GetPlayer();
+            if (player && player.Has<my2d::AnimatorComponent>() && player.Has<my2d::PlatformerControllerComponent>() && player.Has<my2d::RigidBody2DComponent>())
+            {
+                auto& an = player.Get<my2d::AnimatorComponent>();
+                auto& pc = player.Get<my2d::PlatformerControllerComponent>();
+                auto& rb = player.Get<my2d::RigidBody2DComponent>();
+
+                std::string next = an.clip;
+
+                if (!pc.grounded)
+                    next = "jump";
+                else
+                {
+                    float vx = 0.0f;
+                    if (b2Body_IsValid(rb.bodyId))
+                        vx = std::abs(b2Body_GetLinearVelocity(rb.bodyId).x);
+
+                    next = (vx > 0.05f) ? "walk" : "idle";
+                }
+
+                if (next != an.clip)
+                {
+                    an.clip = next;
+                    an.time = 0.0f;
+                    an.frameIndex = 0;
+                }
+            }
+        }
         cam.SetPosition(m_rooms.GetPlayer().Get<my2d::TransformComponent>().position);
     }
 
@@ -222,7 +252,7 @@ private:
             auto pickup = s.CreateEntity("DashPickup");
             pickup.Get<my2d::TransformComponent>().position = { 200.0f, -220.0f };
             auto& pspr = pickup.Add<my2d::SpriteRendererComponent>();
-            pspr.texturePath = "test.png";
+            pspr.texturePath = "saul.png";
             pspr.size = { 32.0f, 32.0f };
             pspr.layer = 1;
 

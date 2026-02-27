@@ -94,7 +94,7 @@ namespace my2d
         return overlap;
     }
 
-    bool RoomManager::LoadRoom(Engine& engine, const std::string& sceneRelPath, const std::string& spawnName)
+    bool RoomManager::LoadRoom(Engine& engine, std::string sceneRelPath, std::string spawnName)
     {
         const std::string fullPath = ResolveScenePath(engine, sceneRelPath);
 
@@ -140,20 +140,38 @@ namespace my2d
                 auto& t = m_player.Get<TransformComponent>();
                 t.position = { 0.0f, 0.0f };
 
+                // --- Visual (48x48 frames), bottom-centered ---
                 auto& spr = m_player.Add<SpriteRendererComponent>();
-                spr.texturePath = "test.png";
                 spr.size = { 64.0f, 64.0f };
                 spr.layer = 0;
 
+                // Anchor at feet (bottom-center)
+                spr.pivot = { 0.5f, 1.0f };
+
+                // Animator drives atlasPath/regionName every frame
+                auto& an = m_player.Add<AnimatorComponent>();
+                an.animSetPath = "Animations/player.anim.json";
+                an.clip = "idle";
+
+                // --- Physics (FAIR hitbox, not tied to art pixels) ---
                 auto& rb = m_player.Add<RigidBody2DComponent>();
                 rb.enableSleep = false;
                 rb.type = BodyType2D::Dynamic;
                 rb.fixedRotation = true;
 
                 auto& bc = m_player.Add<BoxCollider2DComponent>();
-                bc.size = spr.size;
+                bc.size = { 28.0f, 52.0f }; // fair “body” (tune later)
                 bc.friction = 0.0f;
 
+                // Collision filtering
+                bc.categoryBits = my2d::PhysicsLayers::Player;
+                bc.maskBits = my2d::PhysicsLayers::Environment | my2d::PhysicsLayers::Enemy;
+
+                // Align sprite feet to collider bottom center.
+                // Your Transform.position is currently treated like “top-left” of gameplay body.
+                spr.offset = { bc.size.x * 0.5f, bc.size.y };
+
+                // Controller
                 auto& pc = m_player.Add<PlatformerControllerComponent>();
                 pc.moveSpeedPx = 320.0f;
 
@@ -196,6 +214,7 @@ namespace my2d
         GateSystem_Update(engine, *m_scene);
 
         auto& reg = m_scene->Registry();
+        m_scene->OnUpdate(engine, dt);
 
         auto& playerT = m_player.Get<TransformComponent>();
         BoxCollider2DComponent* playerBox = nullptr;
@@ -227,8 +246,10 @@ namespace my2d
 
             if (trigger)
             {
+                const std::string nextScene = door.targetScene;
+                const std::string nextSpawn = door.targetSpawn;
                 door.cooldownTimer = 0.3f;
-                LoadRoom(engine, door.targetScene, door.targetSpawn);
+                LoadRoom(engine, nextScene, nextSpawn);
                 return;
             }
         }

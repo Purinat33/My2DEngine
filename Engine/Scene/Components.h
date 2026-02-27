@@ -36,14 +36,22 @@ namespace my2d
 
     struct SpriteRendererComponent
     {
-        std::string texturePath;          // asset key/path
-        glm::vec2 size{ 64.0f, 64.0f };   // world size (pixels)
+        std::string texturePath;          // legacy path
+
+        // If atlasPath+regionName are set, they override texturePath/useSourceRect/sourceRect.
+        std::string atlasPath;            // e.g. "Atlases/player.atlas.json"
+        std::string regionName;           // e.g. "player_idle_0"
+
+        glm::vec2 size{ 64.0f, 64.0f };   // world size in pixels
         SDL_Color tint{ 255, 255, 255, 255 };
         int layer = 0;
 
+        // NEW: anchor + alignment
+        glm::vec2 pivot{ 0.0f, 0.0f };    // (0,0)=top-left, (0.5,1)=bottom-center
+        glm::vec2 offset{ 0.0f, 0.0f };   // extra world pixel offset
+
         bool useSourceRect = false;
         SDL_Rect sourceRect{ 0, 0, 0, 0 };
-
         SDL_RendererFlip flip = SDL_FLIP_NONE;
     };
 
@@ -239,8 +247,8 @@ namespace my2d
         float jumpSpeedPx = 650.0f;        // initial jump velocity (px/s)
         float coyoteTime = 0.10f;          // seconds after leaving ground you can still jump
         float jumpBufferTime = 0.12f;      // seconds before landing to buffer jump
-        float groundCheckDistancePx = 6.0f;
-        float groundRayInsetPx = 6.0f;     // inset from edges for left/right rays
+        float groundCheckDistancePx = 10.0f;
+        float groundRayInsetPx = 4.0f;     // inset from edges for left/right rays
 
         // keys
         SDL_Scancode left = SDL_SCANCODE_A;
@@ -400,6 +408,18 @@ namespace my2d
 
         // runtime
         bool aggro = false;
+    };
+
+    struct AnimatorComponent
+    {
+        std::string animSetPath;  // e.g. "Animations/player.anim.json"
+        std::string clip = "idle";
+
+        float time = 0.0f;
+        int frameIndex = 0;
+
+        bool playing = true;
+        float speed = 1.0f;
     };
 
 }

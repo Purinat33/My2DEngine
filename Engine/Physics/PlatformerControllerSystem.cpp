@@ -42,14 +42,26 @@ namespace my2d
 
         const b2Vec2 center = b2Body_GetPosition(rb.bodyId);
 
-        const float halfW = (bc.size.x * 0.5f) / ppm;
-        const float halfH = (bc.size.y * 0.5f) / ppm;
+        float halfW = (bc.size.x * 0.5f) / ppm;
+        float halfH = (bc.size.y * 0.5f) / ppm;
 
-        const float inset = pc.groundRayInsetPx / ppm;
-        const float rayLen = pc.groundCheckDistancePx / ppm;
+        const float eps = 0.5f / ppm; // 0.5 px
+        halfW += eps;
+        halfH += eps;
 
-        const b2Vec2 o1 = b2Vec2{ center.x - std::max(0.0f, halfW - inset), center.y + halfH - 0.001f };
-        const b2Vec2 o2 = b2Vec2{ center.x + std::max(0.0f, halfW - inset), center.y + halfH - 0.001f };
+        // “Skin” keeps ray origin slightly above the bottom so we don’t start inside geometry
+        const float skin = (2.0f) / ppm; // 2 px
+        const float rayLen = (pc.groundCheckDistancePx / ppm) + skin * 2.0f;
+
+        // Clamp inset so we always actually cast near feet
+        float inset = pc.groundRayInsetPx / ppm;
+        inset = std::clamp(inset, 0.0f, halfW * 0.9f);
+        const float footX = std::max(0.0f, halfW - inset);
+
+        // Origins: left, center, right at “feet line”
+        const b2Vec2 oL = b2Vec2{ center.x - footX, center.y + halfH - skin };
+        const b2Vec2 oC = b2Vec2{ center.x,         center.y + halfH - skin };
+        const b2Vec2 oR = b2Vec2{ center.x + footX, center.y + halfH - skin };
 
         b2QueryFilter qf = b2DefaultQueryFilter();
         qf.categoryBits = PhysicsLayers::Player;
@@ -60,9 +72,8 @@ namespace my2d
                 b2RayResult res = b2World_CastRayClosest(worldId, origin, b2Vec2{ 0.0f, rayLen }, qf);
                 if (!res.hit) return;
 
-                // Need an upward-ish normal (y+ is down, so "up" is negative y)
-                if (res.normal.y >= -0.2f) return;
-
+                // Convert normal to slope angle vs “up”
+                // y+ is down => up is (0,-1) so use -normal.y
                 const float cosUp = std::clamp(-res.normal.y, 0.0f, 1.0f);
                 const float slopeDeg = std::acos(cosUp) * 57.2957795f;
 
@@ -72,6 +83,9 @@ namespace my2d
                 gi.grounded = (slopeDeg <= pc.maxGroundSlopeDeg);
                 gi.jumpable = (slopeDeg <= pc.maxJumpSlopeDeg);
 
+                if (!gi.grounded) return; // ignore near-vertical hits
+
+                // Pick “best” = flattest (smallest slope)
                 if (!found || gi.slopeDeg < best.slopeDeg)
                 {
                     best = gi;
@@ -79,12 +93,12 @@ namespace my2d
                 }
             };
 
-        consider(o1);
-        consider(o2);
+        consider(oL);
+        consider(oC);
+        consider(oR);
 
         return best;
     }
-
 
     void PlatformerController_FixedUpdate(Engine& engine, Scene& scene, float fixedDt)
     {
